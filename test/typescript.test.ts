@@ -44,13 +44,25 @@ test("symbols lists nested declarations, normalized kinds, and UTF-16 positions"
   assert.equal(adapter?.nameRange?.start.line, 9);
   assert.equal(adapter?.nameRange?.start.column, 13);
   const constructors = result.data.matches.filter((match) => match.kind === "constructor");
-  assert.equal(constructors.length, 1);
-  assert.equal(constructors[0]?.name, "constructor");
-  assert.ok(constructors[0]?.nameRange);
-  assert.equal(constructors[0]?.nameRange?.start.line, adapter?.nameRange?.start.line + 1);
-  assert.equal(constructors[0]?.nameRange?.start.line, constructors[0]?.nameRange?.end.line);
+  assert.equal(constructors.length, 7);
+  const explicitConstructor = constructors.find((match) => match.qualifiedName === "FileAdapter.constructor");
+  assert.equal(explicitConstructor?.name, "constructor");
+  assert.ok(explicitConstructor?.nameRange);
+  assert.equal(explicitConstructor?.nameRange?.start.line, adapter?.nameRange?.start.line + 1);
+  assert.equal(explicitConstructor?.nameRange?.start.line, explicitConstructor?.nameRange?.end.line);
+  const implicitConstructor = constructors.find((match) => match.qualifiedName === "BaseService.constructor");
+  assert.equal(implicitConstructor?.name, "constructor");
+  assert.equal(implicitConstructor?.nameRange, undefined);
   const constructorSearch = searchSymbols({ root: fixtureRoot, symbol: "constructor" });
-  assert.deepEqual(constructorSearch.data.matches.map((match) => [match.name, match.kind, match.path]), [["constructor", "constructor", "src/config.ts"]]);
+  assert.ok(constructorSearch.data.matches.length >= constructors.length);
+  assert.ok(constructorSearch.data.matches.every((match) => match.kind === "constructor"));
+  const constructorDefinitions = findDefinition({ root: fixtureRoot, symbol: "constructor" });
+  assert.equal(constructorDefinitions.status, "complete");
+  assert.equal(constructorDefinitions.data.matches.length, constructorSearch.data.matches.length);
+  assert.ok(constructorDefinitions.data.matches.every((match) => match.kind === "constructor"));
+  const constructorFromPosition = findDefinition({ root: fixtureRoot, symbol: "ignored-query-name", from: { path: "src/config.ts", line: 10, column: 10 } });
+  assert.equal(constructorFromPosition.status, "complete");
+  assert.deepEqual(constructorFromPosition.data.matches.map((match) => [match.name, match.qualifiedName, match.kind]), [["constructor", "FileAdapter.constructor", "constructor"]]);
   assert.equal(listSymbols({ root: fixtureRoot, path: "src\\config.ts" }).data.matches.length, result.data.matches.length);
 });
 
@@ -75,10 +87,19 @@ test("a source position resolves an import alias to its semantic definition", ()
 });
 
 test("references use compiler symbols and ignore comments and string literals", () => {
+  const projectDefinition = findDefinition({ root: fixtureRoot, symbol: "projectName" }).data.matches.find((match) => match.qualifiedName === "projectName" && match.kind === "constant");
+  assert.ok(projectDefinition);
+
   const shorthand = findReferences({ root: fixtureRoot, symbol: "projectName" });
   assert.equal(shorthand.status, "complete");
   assert.ok(!shorthand.diagnostics.some((item) => item.code === "SYMBOL_NOT_FOUND"));
-  assert.ok(shorthand.data.matches.some((match) => match.relation === "reference" && match.path === "src/config.ts"));
+  const shorthandReference = shorthand.data.matches.find((match) => match.relation === "reference" && match.path === "src/config.ts");
+  assert.ok(shorthandReference);
+  assert.equal(shorthandReference?.symbolId, projectDefinition?.symbolId);
+
+  const fromShorthand = findReferences({ root: fixtureRoot, symbol: "ignored-query-name", from: { path: "src/config.ts", line: 58, column: 35 } });
+  assert.equal(fromShorthand.status, "complete");
+  assert.equal(fromShorthand.data.matches.find((match) => match.relation === "reference")?.symbolId, projectDefinition?.symbolId);
 
   const result = findReferences({ root: fixtureRoot, symbol: "resolveConfig" });
   assert.equal(result.status, "complete");

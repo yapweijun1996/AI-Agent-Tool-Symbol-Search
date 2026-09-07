@@ -122,7 +122,7 @@ CLI JSON is emitted only on stdout. Human-readable copies of diagnostics are emi
 
 ## 7. Match shape
 
-A match has this shape; constructor declarations use the stable public name `constructor` and a name range covering the constructor keyword:
+A match has this shape; explicit and implicit class constructors use the stable public name `constructor`. Explicit constructors have a name range covering the constructor keyword; implicit records use the containing class range because no constructor token exists:
 
 ```json
 {

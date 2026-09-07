@@ -180,7 +180,7 @@ function effectiveLimit(requestLimit: number | undefined, limits: ResourceLimits
   return Math.min(requestLimit ?? limits.defaultResults, limits.maxResults);
 }
 
-function sourcePosition(context: ProjectContext, position: SourcePosition): { sourceFile?: ts.SourceFile; node?: ts.Node; diagnostic?: Diagnostic } {
+function sourcePosition(context: ProjectContext, position: SourcePosition): { sourceFile?: ts.SourceFile; node?: ts.Node; constructorNode?: ts.ConstructorDeclaration; diagnostic?: Diagnostic } {
   const resolved = resolveExistingInsideRoot(context.root, position.path, "from.path");
   if ("diagnostic" in resolved) {
     return { diagnostic: resolved.diagnostic };
@@ -209,13 +209,22 @@ function sourcePosition(context: ProjectContext, position: SourcePosition): { so
     ts.forEachChild(candidate, findInnermostNode);
   };
   findInnermostNode(sourceFile);
+  let constructor: ts.ConstructorDeclaration | undefined;
+  let candidate: ts.Node | undefined = node;
+  while (candidate && candidate !== sourceFile) {
+    if (ts.isConstructorDeclaration(candidate)) {
+      constructor = candidate;
+      break;
+    }
+    candidate = candidate.parent;
+  }
   while (node && node !== sourceFile && !context.checker?.getSymbolAtLocation(node)) {
     node = node.parent;
   }
   if (!node) {
-    return { sourceFile, diagnostic: diagnostic("SYMBOL_NOT_FOUND", "No resolvable symbol exists at from.path/from.line/from.column", "info", resolved.value.relative) };
+    return { sourceFile, constructorNode: constructor, diagnostic: diagnostic("SYMBOL_NOT_FOUND", "No resolvable symbol exists at from.path/from.line/from.column", "info", resolved.value.relative) };
   }
-  return { sourceFile, node };
+  return { sourceFile, node, constructorNode: constructor };
 }
 
 function recordsForQuery(index: SymbolIndex, query: string): { records: DeclarationRecord[]; symbols: Set<ts.Symbol> } {
@@ -237,34 +246,52 @@ function recordsForQuery(index: SymbolIndex, query: string): { records: Declarat
   return { records, symbols };
 }
 
-function targetsFromRequest(context: ProjectContext, index: SymbolIndex, request: SemanticRequest): { symbols: Set<ts.Symbol>; fromPath?: string; diagnostics: Diagnostic[] } {
+function targetsFromRequest(context: ProjectContext, index: SymbolIndex, request: SemanticRequest): { symbols: Set<ts.Symbol>; records: DeclarationRecord[]; fromPath?: string; diagnostics: Diagnostic[] } {
   const diagnostics: Diagnostic[] = [];
   if (!context.checker) {
-    return { symbols: new Set(), diagnostics: [diagnostic("SEMANTIC_RESOLUTION_UNAVAILABLE", "The TypeScript type checker is unavailable", "warning")] };
+    return { symbols: new Set(), records: [], diagnostics: [diagnostic("SEMANTIC_RESOLUTION_UNAVAILABLE", "The TypeScript type checker is unavailable", "warning")] };
   }
   if (request.from) {
     const position = sourcePosition(context, request.from);
     if (position.diagnostic && position.diagnostic.code !== "SYMBOL_NOT_FOUND") {
-      return { symbols: new Set(), fromPath: request.from.path, diagnostics: [position.diagnostic] };
+      return { symbols: new Set(), records: [], fromPath: request.from.path, diagnostics: [position.diagnostic] };
     }
     if (position.node) {
+      const constructor = position.constructorNode
+        ? index.recordByNode.get(position.constructorNode)
+        : constructorRecordAtNode(index, position.node);
+      if (constructor?.kind === "constructor") {
+        return { symbols: new Set(), records: [constructor], fromPath: request.from.path, diagnostics };
+      }
       const symbol = symbolAtNode(context.checker, position.node);
       if (symbol) {
-        return { symbols: new Set([symbol]), fromPath: request.from.path, diagnostics };
+        return { symbols: new Set([symbol]), records: [], fromPath: request.from.path, diagnostics };
       }
     }
     diagnostics.push(diagnostic("SYMBOL_NOT_FOUND", `No symbol found for ${request.symbol}`, "info", request.from.path));
-    return { symbols: new Set(), fromPath: request.from.path, diagnostics };
+    return { symbols: new Set(), records: [], fromPath: request.from.path, diagnostics };
   }
   const resolved = recordsForQuery(index, request.symbol);
-  if (resolved.symbols.size === 0) {
+  if (resolved.symbols.size === 0 && resolved.records.length === 0) {
     diagnostics.push(diagnostic("SYMBOL_NOT_FOUND", `No symbol named ${request.symbol} was found`, "info"));
   }
-  return { symbols: resolved.symbols, diagnostics };
+  return { symbols: resolved.symbols, records: resolved.records, diagnostics };
 }
 
 function definitionRecords(index: SymbolIndex, symbols: Set<ts.Symbol>): DeclarationRecord[] {
   return index.records.filter((record) => Boolean(record.canonicalSymbol && symbols.has(record.canonicalSymbol) && !record.isAlias));
+}
+
+function constructorRecordAtNode(index: SymbolIndex, node: ts.Node): DeclarationRecord | undefined {
+  let current: ts.Node | undefined = node;
+  while (current) {
+    if (ts.isConstructorDeclaration(current)) {
+      const record = index.recordByNode.get(current);
+      return record?.kind === "constructor" ? record : undefined;
+    }
+    current = current.parent;
+  }
+  return undefined;
 }
 
 function primaryRecords(index: SymbolIndex, symbols: Set<ts.Symbol>): Map<ts.Symbol, DeclarationRecord> {
@@ -516,7 +543,9 @@ export class SymbolSearchEngine {
     const semanticRequest = request as SemanticRequest;
     const target = targetsFromRequest(context, index, semanticRequest);
     if (semanticRequest.operation === "definition") {
-      const definitions = definitionRecords(index, target.symbols);
+      const definitions = target.symbols.size > 0
+        ? definitionRecords(index, target.symbols)
+        : target.records.filter((record) => !record.isAlias);
       const diagnostics = [...target.diagnostics];
       const ambiguous = definitions.length > 1;
       if (ambiguous) {

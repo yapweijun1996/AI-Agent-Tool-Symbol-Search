@@ -241,7 +241,15 @@ export function canonicalSymbol(checker: ts.TypeChecker, symbol: ts.Symbol | und
 }
 
 export function symbolAtNode(checker: ts.TypeChecker, node: ts.Node): ts.Symbol | undefined {
-  return canonicalSymbol(checker, checker.getSymbolAtLocation(node));
+  const shorthand = ts.isShorthandPropertyAssignment(node)
+    ? node
+    : ts.isIdentifier(node) && ts.isShorthandPropertyAssignment(node.parent)
+      ? node.parent
+      : undefined;
+  const symbol = shorthand
+    ? checker.getShorthandAssignmentValueSymbol(shorthand) ?? checker.getSymbolAtLocation(node)
+    : checker.getSymbolAtLocation(node);
+  return canonicalSymbol(checker, symbol);
 }
 
 function effectivelyExported(checker: ts.TypeChecker, record: DeclarationRecord): boolean {
@@ -345,6 +353,33 @@ export function buildSymbolIndex(context: ProjectContext, deadline = Number.POSI
     record.symbolId = owner.symbolId;
   }
 
+  for (const classNode of classLikeNodes) {
+    if (!ts.isClassDeclaration(classNode) && !ts.isClassExpression(classNode)) continue;
+    const classRecord = recordByNode.get(classNode);
+    if (!classRecord || classRecord.kind !== "class") continue;
+    const hasExplicitConstructor = records.some((record) => ts.isConstructorDeclaration(record.node) && parentClassLikeNode(record.node) === classNode);
+    if (hasExplicitConstructor) continue;
+    records.push({
+      node: classNode,
+      sourceFile: classNode.getSourceFile(),
+      name: "constructor",
+      qualifiedName: `${classRecord.qualifiedName}.constructor`,
+      kind: "constructor",
+      container: classRecord.name,
+      signature: "constructor()",
+      isAlias: false,
+      exported: false,
+      symbolId: `sha256-v1:${createHash("sha256").update([
+        "symbol-id-v1",
+        "typescript",
+        repositoryRelative(context.root.absolute, sourceFilePath(classNode.getSourceFile())),
+        `${classRecord.qualifiedName}.constructor`,
+        "constructor",
+        "constructor()"
+      ].join("\n"), "utf8").digest("hex")}`
+    });
+  }
+
   records.sort((left, right) => {
     const leftPath = repositoryRelative(context.root.absolute, sourceFilePath(left.sourceFile));
     const rightPath = repositoryRelative(context.root.absolute, sourceFilePath(right.sourceFile));
@@ -360,6 +395,15 @@ export function buildSymbolIndex(context: ProjectContext, deadline = Number.POSI
     recordsBySymbol.set(record.canonicalSymbol, existing);
   }
   return { records, recordByNode, recordByNameNode, recordsBySymbol, classLikeNodes, timedOut };
+}
+
+function parentClassLikeNode(node: ts.Node): ts.ClassDeclaration | ts.ClassExpression | undefined {
+  let parent = node.parent;
+  while (parent) {
+    if (ts.isClassDeclaration(parent) || ts.isClassExpression(parent)) return parent;
+    parent = parent.parent;
+  }
+  return undefined;
 }
 
 function sourceFilePath(sourceFile: ts.SourceFile): string {

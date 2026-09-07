@@ -15,7 +15,7 @@ All entries are user-visible changes. Package `0.1.0` is currently unreleased; n
 - Added a shared TypeScript compiler/checker-backed library and `agent-symbol-search` CLI.
 - Added `capabilities`, exact/prefix/substring `search`, `symbols`, `definition`, `references`, and explicit `implements`/`extends`/abstract-method `implementations` operations.
 - Added versioned JSON schemas and runtime validation for requests, results, capabilities, ranges, IDs, diagnostics, truncation, and limits.
-- Added deterministic TypeScript project selection, fixed no-config fallback behavior, path-alias support, ambiguity diagnostics, normalized kinds including stable constructors, effective export-specifier/re-export state, exported variable/binding state, variable-bound class-expression relationships, POSIX paths, UTF-16 ranges, and SHA-256 symbol identities.
+- Added deterministic TypeScript project selection, fixed no-config fallback behavior, path-alias support, ambiguity diagnostics, normalized kinds including stable explicit/implicit constructors, effective export-specifier/re-export state, exported variable/binding state, variable-bound class-expression relationships, POSIX paths, UTF-16 ranges, and SHA-256 symbol identities.
 - Added bounded read-only discovery with root/symlink containment, `.gitignore`, nested include-glob reachability, non-overridable `node_modules` exclusion, include/exclude precedence, secret exclusions, file/byte/result budgets, and cooperative timeout diagnostics.
 
 ### Verification
