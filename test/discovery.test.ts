@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 import test from "node:test";
-import { createEngine, findDefinition, searchSymbols } from "../src";
-import { copyTypeScriptFixture, removeDirectory, snapshotFiles, temporaryDirectory, tryCreateSymlink, writeSource } from "./helpers";
+import { copyTypeScriptFixture, createEngine, findDefinition, removeDirectory, searchSymbols, snapshotFiles, temporaryDirectory, tryCreateSymlink, writeSource } from "./helpers";
 
 test("no-config projects use the documented fixed fallback", () => {
   const root = temporaryDirectory();
@@ -27,7 +26,9 @@ test("multiple configs fail deterministically instead of selecting the first", (
     const result = searchSymbols({ root, symbol: "visible" });
     assert.equal(result.status, "error");
     assert.ok(result.diagnostics.some((item) => item.message.includes("Multiple TypeScript project configurations")));
-    assert.ok(result.diagnostics.some((item) => item.details && item.details.reason === "multiple-project-configs"));
+    const multiple = result.diagnostics.find((item) => item.details?.reason === "multiple-project-configs");
+    assert.deepEqual(multiple?.details?.projects, ["tsconfig.alt.json", "tsconfig.json"]);
+    assert.match(multiple?.message ?? "", /pass project explicitly/);
   } finally {
     removeDirectory(root);
   }
@@ -56,11 +57,44 @@ test("an explicit project resolves ambiguity and stays inside the root", () => {
     writeSource(root, "src/main.ts", "export const selected = 1;\n");
     writeSource(root, "tsconfig.json", '{"compilerOptions":{"noEmit":true},"include":["src/**/*.ts"]}\n');
     writeSource(root, "tsconfig.alt.json", '{"compilerOptions":{"noEmit":true},"include":["src/**/*.ts"]}\n');
-    const result = findDefinition({ root, symbol: "selected", project: "tsconfig.json" });
+    const result = searchSymbols({ root, symbol: "selected", project: "tsconfig.json" });
     assert.equal(result.status, "complete");
     assert.equal(result.stats.project, "tsconfig.json");
+    assert.equal(result.data.matches[0]?.path, "src/main.ts");
+    const definition = findDefinition({ root, symbol: "selected", project: "tsconfig.json" });
+    assert.equal(definition.status, "complete");
   } finally {
     removeDirectory(root);
+  }
+});
+
+test("invalid project selectors remain bounded and deterministic", () => {
+  const root = temporaryDirectory();
+  const outside = temporaryDirectory();
+  try {
+    writeSource(root, "src/main.ts", "export const selected = 1;\n");
+    writeSource(root, "tsconfig.json", '{"compilerOptions":{"noEmit":true},"include":["src/**/*.ts"]}\n');
+    writeSource(root, "project.json", "{}\n");
+    writeSource(outside, "tsconfig.json", '{"compilerOptions":{"noEmit":true}}\n');
+    const cases = [
+      { project: "project.json", code: "INVALID_REQUEST" },
+      { project: "missing.json", code: "INVALID_REQUEST" },
+      { project: join("..", basename(outside), "tsconfig.json"), code: "PATH_OUTSIDE_ROOT" }
+    ] as const;
+    for (const item of cases) {
+      const result = searchSymbols({ root, symbol: "selected", project: item.project });
+      assert.equal(result.status, "error");
+      assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === item.code));
+    }
+    const link = join(root, "tsconfig.link.json");
+    if (tryCreateSymlink(join(root, "tsconfig.json"), link)) {
+      const result = searchSymbols({ root, symbol: "selected", project: "tsconfig.link.json" });
+      assert.equal(result.status, "error");
+      assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === "INVALID_REQUEST"));
+    }
+  } finally {
+    removeDirectory(root);
+    removeDirectory(outside);
   }
 });
 

@@ -26,6 +26,15 @@ interface ParsedArguments {
   errors: string[];
 }
 
+export interface CliOutput {
+  write(chunk: string): unknown;
+}
+
+export interface CliStreams {
+  stdout: CliOutput;
+  stderr: CliOutput;
+}
+
 function parseArguments(argv: readonly string[]): ParsedArguments {
   const parsed: ParsedArguments = { values: {}, include: [], exclude: [], errors: [] };
   if (argv.length === 0 || argv[0] === "--help" || argv[0] === "-h") {
@@ -96,10 +105,14 @@ function toRequest(parsed: ParsedArguments): unknown {
   return request;
 }
 
-export function main(argv: readonly string[] = process.argv.slice(2), engine = new SymbolSearchEngine()): number {
+export function main(
+  argv: readonly string[] = process.argv.slice(2),
+  engine = new SymbolSearchEngine(),
+  streams: CliStreams = { stdout: process.stdout, stderr: process.stderr }
+): number {
   const parsed = parseArguments(argv);
   if (argv.length === 0 || argv[0] === "--help" || argv[0] === "-h") {
-    process.stdout.write(`${usage()}\n`);
+    streams.stdout.write(`${usage()}\n`);
     return 0;
   }
   const request = toRequest(parsed);
@@ -107,13 +120,13 @@ export function main(argv: readonly string[] = process.argv.slice(2), engine = n
     (request as Record<string, unknown>).__parseErrors = parsed.errors;
   }
   const result = engine.execute(request);
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  streams.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   for (const item of result.diagnostics) {
     const location = item.path ? ` (${item.path})` : "";
-    process.stderr.write(`[${item.code}] ${item.message}${location}\n`);
+    streams.stderr.write(`[${item.code}] ${item.message}${location}\n`);
   }
   if (parsed.errors.length > 0) {
-    for (const error of parsed.errors) process.stderr.write(`[INVALID_REQUEST] ${error}\n`);
+    for (const error of parsed.errors) streams.stderr.write(`[INVALID_REQUEST] ${error}\n`);
     return 2;
   }
   return result.status === "error" ? 1 : 0;

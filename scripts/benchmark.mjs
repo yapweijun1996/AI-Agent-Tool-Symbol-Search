@@ -72,6 +72,11 @@ try {
     const engine = new SymbolSearchEngine();
     const cold = measure(root, engine);
     const warm = measure(root, engine);
+    for (const [phase, measurement] of [["cold", cold], ["warm", warm]]) {
+      if (measurement.truncation.includes("TIMEOUT") || measurement.status === "error") {
+        throw new Error(`${suite.name} ${phase} benchmark did not finish within the product budget`);
+      }
+    }
     results.push({ suite, cold, warm });
   }
   const lines = [
@@ -81,12 +86,13 @@ try {
     "|---|---|",
     "| Status | Active |",
     "| Owner | Project maintainers |",
-    "| Last reviewed | 2026-09-07 |",
+    "| Last reviewed | 2026-09-08 |",
     "",
-    "This report records reproducible local measurements from generated TypeScript fixtures. It is evidence, not a latency or memory guarantee. Each warm run is a second in-memory operation in the same process; V1 has no persistent disk cache.",
+    "This report records reproducible local measurements from generated TypeScript fixtures. It is evidence, not a latency or memory guarantee, and v0.1.0 provides no public performance SLO. The release gate rejects TIMEOUT for every fixture and checks stable fixture file, byte, result, truncation, and status structure. Each warm run is a second in-memory operation in the same process; V1 has no persistent disk cache.",
     "",
     `- Package version: ${packageVersion}`,
-    `- Node.js: ${process.version}`,
+    `- Node.js: ${process.version} (local baseline only; not release evidence)`,
+    "- Supported release runtimes: Node.js 22, 24, and 26; hosted benchmark gate: Ubuntu / Node 24",
     "- Resolver: TypeScript compiler API",
     "- Fixture generation: deterministic file and symbol counts in `scripts/benchmark.mjs`",
     ""

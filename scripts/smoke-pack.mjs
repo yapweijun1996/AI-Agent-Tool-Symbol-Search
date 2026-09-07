@@ -16,14 +16,14 @@ try {
   execFileSync("npm", ["install", "--prefix", installRoot, "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", archive], { cwd: repository, stdio: "inherit" });
 
   const cli = join(installRoot, "node_modules", ".bin", "agent-symbol-search");
-  const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--symbol", "resolveConfig"], { encoding: "utf8" });
+  const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--project", "tsconfig.json", "--symbol", "resolveConfig"], { encoding: "utf8" });
   if (cliRun.status !== 0) throw new Error(`packaged CLI exited ${cliRun.status}: ${cliRun.stderr}`);
   const cliResult = JSON.parse(cliRun.stdout);
   if (cliResult.status !== "complete" || !cliResult.data.matches?.length) throw new Error("packaged CLI did not resolve the fixture definition");
 
   const libraryRun = spawnSync(process.execPath, ["-e", [
     "const api = require('agent-symbol-search');",
-    `const result = api.findReferences({ root: ${JSON.stringify(fixtureRoot)}, symbol: 'resolveConfig' });`,
+    `const result = api.findReferences({ root: ${JSON.stringify(fixtureRoot)}, project: 'tsconfig.json', symbol: 'resolveConfig' });`,
     "if (result.status !== 'complete' || !result.data.matches.length) process.exit(1);"
   ].join("\n")], { cwd: installRoot, encoding: "utf8" });
   if (libraryRun.status !== 0) throw new Error(`packaged library failed: ${libraryRun.stderr}`);

@@ -14,7 +14,8 @@ const documents = [
   "TASK.md",
   "DOCUMENTATION_STANDARD.md",
   "CHANGELOG.md",
-  "BENCHMARK.md"
+  "BENCHMARK.md",
+  "RELEASE.md"
 ];
 const failures = [];
 const contents = new Map();
@@ -58,10 +59,10 @@ for (const phrase of ["schemaVersion", "AMBIGUOUS_SYMBOL", "MAX_RESULTS_REACHED"
 for (const document of documents.filter((name) => name !== "DOCUMENTATION_STANDARD.md")) {
   if (!contents.get(document)?.includes(version)) fail(`${document}: missing package version ${version}`);
 }
-for (const script of ["build", "typecheck", "lint", "test", "verify", "smoke:pack", "capability:check", "benchmark:check", "docs:check"]) {
+for (const script of ["build", "prepack", "typecheck", "lint", "test", "coverage", "schema:check", "verify", "smoke:pack", "capability:check", "benchmark:check", "docs:check", "release:check", "prepublishOnly"]) {
   if (typeof packageJson.scripts?.[script] !== "string") fail(`package.json: missing npm script ${script}`);
 }
-for (const command of ["npm run verify", "npm run smoke:pack", "npm run capability:check", "npm run benchmark:check", "npm run docs:check"]) {
+for (const command of ["npm run verify", "npm run coverage", "npm run schema:check", "npm run smoke:pack", "npm run capability:check", "npm run benchmark:check", "npm run docs:check", "npm run release:check"]) {
   if (!readme.includes(command) && !spec.includes(command) && !task.includes(command)) fail(`documentation: missing ${command}`);
 }
 
@@ -82,12 +83,16 @@ for (const phase of ["Phase 0", "Phase 1"]) {
   const block = start < 0 ? "" : roadmap.slice(start, end < 0 ? roadmap.length : end);
   if (!/\*\*Status: Completed\*\*/.test(block)) fail(`ROADMAP.md: ${phase} is not marked Completed`);
 }
-const completedWorkstreams = (epic.match(/\| [^|]+ \| Completed \|/g) ?? []).length;
+const completedWorkstreams = (epic.match(/\| [^|]+ \| Completed(?: locally; publication pending)? \|/g) ?? []).length;
 if (completedWorkstreams < 7) fail(`EPIC.md: expected 7 completed V1 workstreams, found ${completedWorkstreams}`);
 if (/documentation-only initial baseline|no runtime implementation|No runtime, package manifest/.test(`${readme}\n${design}\n${task}`)) fail("current-status documents still contain stale documentation-only claims");
 if (/### Runtime[\s\S]*None\. No CLI/.test(changelog)) fail("CHANGELOG.md: runtime is still described as empty");
 if (/`HEAD` is the historical documentation baseline/i.test(task)) fail("TASK.md: HEAD is still described as a historical/baseline checkout");
 if (!task.includes("HEAD` is the current V1 implementation line")) fail("TASK.md: current HEAD reconciliation is missing");
+if (!readme.includes("Node.js 22") || !readme.includes("Node.js 24") || !readme.includes("Node.js 26")) fail("README.md: supported Node.js majors are missing");
+if (packageJson.engines?.node !== "^22.0.0 || ^24.0.0 || ^26.0.0") fail("package.json: supported Node.js engine range is incorrect");
+if (packageJson.publishConfig?.registry !== "https://registry.npmjs.org/" || packageJson.publishConfig?.access !== "public") fail("package.json: public npm publish configuration is incorrect");
+if (packageJson.repository?.url !== "git+https://github.com/yapweijun1996/AI-Agent-Tool-Symbol-Search.git") fail("package.json: repository URL is incorrect");
 const gitHeadFiles = spawnSync("git", ["ls-tree", "-r", "--name-only", "HEAD"], { encoding: "utf8" });
 if (gitHeadFiles.error || gitHeadFiles.status !== 0) fail("Git evidence: unable to inspect HEAD");
 else {
@@ -137,6 +142,18 @@ else {
     fail(`CLI quick-start: stdout is not valid JSON (${error instanceof Error ? error.message : String(error)})`);
   }
   if (cli.stderr.length !== 0) fail(`CLI quick-start: stderr was not empty (${cli.stderr.length} bytes)`);
+}
+
+const recovery = spawnSync(process.execPath, [resolve("dist/cli.js"), "search", "--root", process.cwd(), "--project", "tsconfig.json", "--symbol", "SymbolSearchEngine"], { encoding: "utf8" });
+if (recovery.error || recovery.status !== 0) fail(`project recovery command: exited ${recovery.status ?? "unknown"}`);
+else {
+  try {
+    const recoveryResult = JSON.parse(recovery.stdout);
+    if (recoveryResult.status !== "complete" || !recoveryResult.data?.matches?.some((match) => match.name === "SymbolSearchEngine")) fail("project recovery command: SymbolSearchEngine was not found");
+  } catch (error) {
+    fail(`project recovery command: stdout is not valid JSON (${error instanceof Error ? error.message : String(error)})`);
+  }
+  if (recovery.stderr.length !== 0) fail(`project recovery command: stderr was not empty (${recovery.stderr.length} bytes)`);
 }
 
 const jsonBlocks = [...spec.matchAll(/```json\n([\s\S]*?)\n```/g)];

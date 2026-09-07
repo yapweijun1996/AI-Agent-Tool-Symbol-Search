@@ -4,8 +4,8 @@
 |---|---|
 | Status | Active |
 | Owner | Project maintainers |
-| Last reviewed | 2026-09-07 |
-| Implementation baseline | V1 TypeScript vertical slice is implemented in the current working tree; no package has been published |
+| Last reviewed | 2026-09-08 |
+| Implementation baseline | V1 TypeScript vertical slice and v0.1.0 release gates are implemented in the current working tree; npm publication is pending |
 
 ## 1. Purpose and boundary
 
@@ -15,9 +15,9 @@ The implementation locates code; it does not return source bodies. `agent-code-s
 
 ## 2. Verified current state
 
-The working tree now contains a Node.js/TypeScript package, JSON schemas, a CLI, a library API, TypeScript fixtures, contract tests, security tests, and a benchmark baseline. The package is version `0.1.0` and is unreleased. The original documentation changes in the working tree are preserved; they are not treated as released history.
+The working tree now contains a Node.js/TypeScript package, JSON schemas, a CLI, a library API, TypeScript fixtures, contract tests, security tests, native coverage gates, a CI matrix, and a benchmark baseline. The package is version `0.1.0`; registry publication is pending the interactive release checklist. The original documentation changes in the working tree are preserved; they are not treated as released history.
 
-The executable TypeScript capability is verified by the test suite and packaged-artifact smoke test. JavaScript, Python, and CFML remain proposed adapters. No precision, latency, or memory threshold is claimed beyond the measurements in `BENCHMARK.md`.
+The executable TypeScript capability is verified by the test suite and packaged-artifact smoke test. JavaScript, Python, and CFML remain proposed adapters. Coverage thresholds are product-source gates, while benchmark timings remain evidence only; v0.1.0 makes no public latency SLO.
 
 ## 3. V1 delivery boundary
 
@@ -75,7 +75,7 @@ test/
 scripts/
 ```
 
-`typescript` is used as a runtime dependency because search creates a compiler `Program`; `ajv`, `ignore`, and `minimatch` provide runtime schema and discovery behavior. Versions are pinned in `package.json` and `package-lock.json`. Node.js `>=20.0.0` is the supported engine range.
+`typescript` is used as a runtime dependency because search creates a compiler `Program`; `ajv`, `ignore`, and `minimatch` provide runtime schema and discovery behavior. Versions are pinned in `package.json` and `package-lock.json`. Node.js 22, 24, and 26 are the supported engine majors; Node 20 and Node 23 are not release evidence.
 
 ## 5. Ownership boundaries
 
@@ -95,7 +95,7 @@ Project selection is deterministic:
 1. An explicit `project` must resolve to an in-root existing `tsconfig*.json` file.
 2. Without `project`, the tool discovers `tsconfig*.json` files using the same bounded ignore and secret policy.
 3. Exactly one discovered config is selected.
-4. Multiple configs return an `INVALID_REQUEST` error with every candidate and an instruction to pass `project`; the first config is never selected.
+4. Multiple configs return an `INVALID_REQUEST` error with every candidate and an instruction to pass `project`; the first config is never selected. Search requests support the same explicit project recovery path as semantic and symbols requests.
 5. With no config, fixed fallback options are used: CommonJS/Node resolution, ES2022 target, strict checking, no emit, no JavaScript, and preserved JSX.
 
 A selected config's `include`/`files` set controls the Program, filtered to discovered in-root TypeScript files. Outside-root configured files are excluded with a repository-safe `PATH_OUTSIDE_ROOT` diagnostic attached to the selected config, and the result is partial. `paths`, `baseUrl`, and module resolution are honored by the TypeScript compiler. Project references are reported as `SEMANTIC_RESOLUTION_UNAVAILABLE` and are not recursively built in V1. JavaScript enabled by a config is deliberately excluded because JavaScript is not a shipped adapter. Compiler version and selected project/fallback mode are present in `stats`.
@@ -160,3 +160,4 @@ The V1 implementation is considered verified only with all of the following:
 3. `npm run capability:check` reports TypeScript V1 support and future adapters as proposed.
 4. `npm run benchmark:check` validates the cold/warm small, medium, and large baseline in `BENCHMARK.md`.
 5. `npm run docs:check` confirms documentation metadata, links, schemas, examples, and current/proposed claims.
+6. The release checklist and CI verify Node 22/24/26 quality, Node 24 package smoke on Ubuntu/macOS/Windows, and the Ubuntu/Node 24 benchmark fixture gate before publication.

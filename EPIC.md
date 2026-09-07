@@ -4,9 +4,9 @@
 |---|---|
 | Status | Active |
 | Owner | Project maintainers |
-| Last reviewed | 2026-09-07 |
+| Last reviewed | 2026-09-08 |
 | Epic ID | SS-V1-TS |
-| Current state | V1 TypeScript vertical slice is implemented and verified in the current working tree; package 0.1.0 is unreleased |
+| Current state | V1 TypeScript vertical slice, release gates, CI, and package metadata for `0.1.0` are implemented and verified in the current working tree; npm publication is pending |
 
 ## Outcome
 
@@ -18,7 +18,7 @@ The outcome is not a universal code-intelligence platform. It is a verified Type
 
 ### In scope
 
-- Node.js/TypeScript package bootstrap with a documented Node.js range;
+- Node.js/TypeScript package bootstrap with supported Node.js majors 22, 24, and 26; release metadata and public npm configuration;
 - versioned request/result/capability types, JSON schemas, and runtime validation;
 - repository discovery with canonical root, symlink, ignore, secret, and resource boundaries;
 - TypeScript symbols, exact/prefix/substring search, definitions, references, and import aliases;
@@ -38,7 +38,7 @@ The outcome is not a universal code-intelligence platform. It is a verified Type
 - arbitrary automatic selection among multiple `tsconfig*.json` files;
 - recursive project-reference builds;
 - hard timeout guarantees beyond cooperative cancellation;
-- public release, deployment, remote push, or a performance SLO.
+- trusted publishing/provenance for this first local release, deployment, or a public performance SLO;
 
 ## Definition of done
 
@@ -50,7 +50,8 @@ This epic is complete for the current V1 boundary only when all of the following
 4. Root validation, symlink handling, ignored/secrets handling, no-write, no-network, and no-execution invariants are verified.
 5. `npm pack` installed-artifact smoke tests pass outside the source checkout.
 6. Cold/warm benchmark output is recorded without claiming an unmeasured latency target.
-7. README, DESIGN, SPEC, ROADMAP, TASK, and CHANGELOG agree with executable behavior.
+7. README, DESIGN, SPEC, ROADMAP, TASK, CHANGELOG, and RELEASE agree with executable behavior.
+8. CI covers Ubuntu Node 22/24/26, Node 24 package smoke on Ubuntu/macOS/Windows, and the Ubuntu/Node 24 benchmark gate; interactive npm publication remains a maintainer action after these gates.
 
 ## Workstreams
 
@@ -62,7 +63,7 @@ This epic is complete for the current V1 boundary only when all of the following
 | TypeScript adapter | Completed | Contract and TypeScript dependency | TypeScript golden fixtures and project-selection tests |
 | CLI/library integration | Completed | Core adapter | CLI/library parity and stdout/stderr tests |
 | Verification and fixtures | Completed | Each implemented operation | `npm run verify` |
-| Packaging and benchmarks | Completed | Passing tests | `npm run smoke:pack`, `npm run benchmark:check`, and `BENCHMARK.md` |
+| Packaging, benchmarks, and release gates | Completed locally; publication pending | Passing tests | `npm run release:check`, CI matrix, `npm pack --dry-run --json`, and `RELEASE.md` |
 
 ## Decisions recorded
 
@@ -73,10 +74,11 @@ This epic is complete for the current V1 boundary only when all of the following
 - `agent-code-slice` remains responsible for source extraction.
 - Ambiguity and partial results are reported rather than hidden.
 - V1.0 confirms only explicit TypeScript inheritance/implementation relationships; structural assignability and dynamic dispatch are not claimed.
-- Multiple TypeScript configs are never selected arbitrarily.
+- Supported release Node majors are 22, 24, and 26; Node 20 and Node 23 are not release evidence.
+- Multiple TypeScript configs are never selected arbitrarily; search supports explicit `project` recovery.
 - Project references are reported but not recursively built in V1.
 - `--exclude` wins over ordinary matching; `--include` may override ordinary ignore filters but never security boundaries.
 
 ## Evidence required for closure
 
-Every workstream has executable evidence in the current working tree. Documentation alone does not close an implementation task. The package remains unreleased until maintainers explicitly perform a release process outside this epic.
+Every workstream has executable evidence in the current working tree. Documentation alone does not close an implementation task. The package remains unpublished until maintainers perform the interactive npm, registry, tag, and GitHub Release steps in `RELEASE.md`; the first local publish does not claim provenance.
