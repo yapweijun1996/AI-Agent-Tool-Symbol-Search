@@ -411,7 +411,11 @@ function derivedFrom(
 }
 
 function isAmbientDeclaration(node: ts.Node): boolean {
-  return node.getSourceFile().isDeclarationFile || Boolean(ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Ambient);
+  if (node.getSourceFile().isDeclarationFile) return true;
+  for (let current: ts.Node | undefined = node; current && !ts.isSourceFile(current); current = current.parent) {
+    if (Boolean(ts.getCombinedModifierFlags(current as ts.Declaration) & ts.ModifierFlags.Ambient)) return true;
+  }
+  return false;
 }
 
 function hasAbstractModifier(node: ts.Node): boolean {

@@ -20,7 +20,7 @@ All entries are user-visible changes. Package `0.1.0` is currently unreleased; n
 
 ### Verification
 
-- Added TypeScript golden fixtures, shorthand-reference and constructor coverage, Base → abstract Mid → concrete Child relationship coverage, ambient `.d.ts` false-positive coverage, effective-export and outside-root diagnostic regressions, false-positive, project-selection, security, limit, read-only, CLI/library parity, and installed-artifact smoke tests.
+- Added TypeScript golden fixtures, shorthand-reference and constructor coverage, Base → abstract Mid → concrete Child relationship coverage, ambient `.d.ts` and namespace/module false-positive coverage, effective-export and outside-root diagnostic regressions, false-positive, project-selection, security, limit, read-only, CLI/library parity, and installed-artifact smoke tests.
 - Added `BENCHMARK.md` with reproducible cold/warm small, medium, and large fixture measurements without a latency guarantee.
 - Added documentation, schema, capability, packaging, benchmark-evidence, and verification scripts; docs and benchmark checks compare claims with runtime output and fresh deterministic fixture measurements. Direct Ajv and minimatch dependencies are pinned to audited non-vulnerable releases.
 

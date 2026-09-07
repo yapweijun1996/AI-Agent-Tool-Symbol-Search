@@ -143,6 +143,22 @@ test("explicit inheritance and implementation relationships are distinct", () =>
   assert.equal(ambient.data.matches.length, 0);
   assert.ok(!ambient.data.matches.some((match) => match.path.endsWith(".d.ts")));
 
+  const namespaceImplementation = findImplementations({ root: fixtureRoot, symbol: "NamespacePort" });
+  assert.equal(namespaceImplementation.status, "partial");
+  assert.equal(namespaceImplementation.data.matches.length, 0);
+
+  const namespaceAbstract = findImplementations({ root: fixtureRoot, symbol: "namespaceRun" });
+  assert.equal(namespaceAbstract.status, "partial");
+  assert.equal(namespaceAbstract.data.matches.length, 0);
+
+  const moduleImplementation = findImplementations({ root: fixtureRoot, symbol: "ModulePort" });
+  assert.equal(moduleImplementation.status, "partial");
+  assert.equal(moduleImplementation.data.matches.length, 0);
+
+  const moduleAbstract = findImplementations({ root: fixtureRoot, symbol: "moduleRun" });
+  assert.equal(moduleAbstract.status, "partial");
+  assert.equal(moduleAbstract.data.matches.length, 0);
+
   const structuralResult = findImplementations({ root: fixtureRoot, symbol: "StructuralAdapter" });
   assert.equal(structuralResult.status, "partial");
   assert.ok(structuralResult.diagnostics.some((item) => item.code === "SEMANTIC_RESOLUTION_UNAVAILABLE"));
