@@ -2,55 +2,96 @@
 
 | Field | Value |
 |---|---|
-| Status | Proposed |
+| Status | Active |
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-07 |
-| Current release | None |
+| Package version | 0.1.0 (unreleased) |
 
 > Deterministic, local-first, read-only symbol navigation for AI coding agents.
 
-## Current status
+## What it does
 
-This repository is a documentation-only initial baseline. There is currently no installable package, CLI, library API, supported language implementation, or runnable example. The documents describe the proposed V1 contract and delivery plan; they do not claim shipped capability.
-
-## Intended problem
-
-The project is intended to answer focused navigation questions such as:
+`agent-symbol-search` answers focused navigation questions without returning full source bodies:
 
 - Where is `buildProject` defined?
 - Who references `ProjectProfile`?
 - Which class explicitly implements `StorageAdapter`?
 - What symbols exist in this file?
 
-It is designed to locate code, not dump source. `agent-code-slice` is expected to read the returned ranges.
+The result is a bounded locator. [`agent-code-slice`](https://github.com/yapweijun1996/AI-Agent-Tool-Code-Slice) remains responsible for reading the returned source range.
 
-## Planned V1.0
+## Current support
 
-The first implementation targets TypeScript symbols, definitions, references, and explicit implementation/inheritance relationships. JavaScript, Python, and CFML are later roadmap phases and are not supported today.
+The V1.0 implementation supports TypeScript through the TypeScript compiler API:
 
-The planned tool is read-only: it will parse project files as data and will not execute code, install dependencies, build, test, modify repositories, use a network, or call an LLM.
+| Operation | Support | Evidence boundary |
+|---|---|---|
+| `capabilities` | Full | Reports the operation-level matrix |
+| `search` | Full | Exact, prefix, and substring declaration-name matching |
+| `symbols` | Full | Normalized declarations in one TypeScript file |
+| `definition` | Full | Compiler/checker definitions, aliases, overloads, and ambiguity |
+| `references` | Full | Compiler/checker references and import aliases |
+| `implementations` | Partial | Explicit `implements`, `extends`, and supported abstract-method overrides |
 
-## Planned example
+JavaScript, Python, and CFML are proposed future adapters, not shipped capabilities. Structural assignability, dynamic dispatch, mixins, and runtime monkey-patching are not confirmed implementation evidence.
 
-The following is illustrative and is **not runnable in the current checkout**:
+## Quick start
+
+Requirements: Node.js 20 or newer and npm.
 
 ```bash
-agent-symbol-search definition \
-  --root . \
-  --symbol resolveConfig \
-  --from-path src/cli.ts \
-  --line 82 \
-  --json
+npm ci
+npm run build
+node dist/cli.js capabilities --root .
+node dist/cli.js definition --root ./path/to/repository --symbol resolveConfig
 ```
 
-See [`SPEC.md`](./SPEC.md) for the proposed contract and [`TASK.md`](./TASK.md) for implementation status.
+The CLI writes one JSON result to stdout. Human-readable diagnostics go to stderr, so stdout can be piped to a JSON parser safely. A complete or partial result exits `0`; invalid requests, invalid roots, and path/security failures exit non-zero.
+
+The library uses the same request/result contract:
+
+```js
+const { findDefinition } = require("agent-symbol-search");
+
+const result = findDefinition({
+  root: "./path/to/repository",
+  symbol: "resolveConfig"
+});
+console.log(result.data.matches);
+```
+
+## Determinism, bounds, and safety
+
+- Every request has an explicit canonicalized root; explicit paths and symlinks cannot escape it.
+- Directory symlinks, generated/vendor directories, ignored files, and secret-like files are excluded by default.
+- `--exclude` always wins; `--include` is an allow-list that can override `.gitignore` and ordinary generated-directory filters, but never secret, `.git`, symlink, or root boundaries.
+- Results use stable POSIX-relative paths, 1-based lines, 0-based UTF-16 columns, versioned SHA-256 symbol IDs, deterministic ranking, and explicit ambiguity/truncation diagnostics.
+- Default and maximum result limits are 50 and 500. Discovery limits are 10,000 files, 2 MiB per file, and 100 MiB parsed bytes. The 5-second budget is cooperative and returns partial evidence with `TIMEOUT` when reached.
+- Search reads project files as data. It does not import or execute project code, install dependencies, build, test, modify repositories, access the network, or call an LLM. `npm ci` is setup-time installation, not search behavior.
+
+TypeScript project selection is deterministic: an explicit `project` must be a repository-relative `tsconfig*.json`; without one, exactly one discovered config is selected, multiple configs produce an actionable error, and no config uses fixed fallback compiler options. Project references are reported but not recursively built in V1. External package files are excluded from repository results.
+
+## Verification and packaging
+
+Run the complete local verification contract:
+
+```bash
+npm run verify
+npm run smoke:pack
+npm run capability:check
+npm run benchmark:check
+npm run docs:check
+```
+
+`smoke:pack` installs the npm tarball in a temporary directory outside the source checkout and exercises both the CLI and library API. `BENCHMARK.md` records cold and warm in-memory measurements for deterministic small, medium, and large generated fixtures; it is a baseline, not a performance guarantee.
 
 ## Documentation
 
-- [`DESIGN.md`](./DESIGN.md) — architecture and boundaries
-- [`SPEC.md`](./SPEC.md) — proposed normative contract
+- [`DESIGN.md`](./DESIGN.md) — implemented architecture, boundaries, and trade-offs
+- [`SPEC.md`](./SPEC.md) — normative request/result contract
 - [`EPIC.md`](./EPIC.md) — TypeScript vertical-slice outcome
-- [`ROADMAP.md`](./ROADMAP.md) — sequenced future work
-- [`TASK.md`](./TASK.md) — active implementation tasks
-- [`CHANGELOG.md`](./CHANGELOG.md) — historical/release notes
+- [`ROADMAP.md`](./ROADMAP.md) — completed and future work
+- [`TASK.md`](./TASK.md) — evidence-backed task status
+- [`CHANGELOG.md`](./CHANGELOG.md) — unreleased and historical changes
+- [`BENCHMARK.md`](./BENCHMARK.md) — reproducible performance baseline
 - [`DOCUMENTATION_STANDARD.md`](./DOCUMENTATION_STANDARD.md) — documentation governance

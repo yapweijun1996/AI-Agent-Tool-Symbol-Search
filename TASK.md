@@ -5,147 +5,132 @@
 | Status | Active |
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-07 |
-| Source of truth | Current repository plus executable evidence once implementation begins |
+| Source of truth | Current repository plus executable evidence |
+| Working-tree scope | V1 TypeScript implementation, verification artifacts, and synchronized documentation; package 0.1.0 is unreleased |
 
 ## Current repository truth
 
-- Only `.gitattributes` is committed as project content.
-- No package manifest, source, test, fixture, schema, benchmark, or CLI exists.
-- No task below may be described as implemented until executable evidence is added.
-- The current documentation change establishes the proposed baseline; it does not ship runtime behavior.
+- `HEAD` is the historical documentation baseline; the current working tree contains the V1 package and verification artifacts described below.
+- The package has no published release and no remote branch has been pushed by this work.
+- JavaScript, Python, and CFML are proposed future adapters, not current capabilities.
+- No task is considered complete from documentation alone; each completed task below has executable evidence.
 
-## Completed in this documentation baseline
+## Completed documentation baseline
 
 ### DOC-001 — Record implementation baseline
 
-**Status:** Complete for this documentation change.
+**Status:** Complete.
 
-**Deliverable:** Design, contract, epic, roadmap, task, README, and changelog describe the repository as unimplemented and distinguish proposed behavior from shipped behavior.
+The design, contract, epic, roadmap, task plan, README, documentation standard, and changelog distinguish proposed behavior from shipped/verified behavior and preserve the original documentation changes.
 
-**Acceptance checks:**
+**Evidence:** `git ls-tree -r --name-only HEAD` shows the historical baseline; `npm run docs:check` checks current metadata, links, contract markers, and schemas.
 
-- `git ls-tree -r --name-only HEAD` confirms the initial commit has no runtime implementation.
-- Each top-level project document has status, owner, and review metadata.
-
-## Active implementation tasks
+## Completed V1 implementation tasks
 
 ### CORE-001 — Bootstrap package and toolchain
 
-**Status:** Blocked
+**Status:** Complete.
 
-**Deliverable:** Add the package manifest, selected Node.js range, TypeScript compiler, test runner, build configuration, and library/CLI entrypoints.
+**Deliverable:** `package.json`, `package-lock.json`, Node.js `>=20.0.0` policy, pinned TypeScript/Ajv/discovery dependencies, compiler configuration, test runner, build output, and CLI/library entrypoints.
 
-**Acceptance checks:**
+**Acceptance evidence:** `npm ci --ignore-scripts --no-audit --no-fund`, `npm run typecheck`, `npm run build`, and `npm run smoke:pack` pass.
 
-- Clean checkout install and typecheck command succeed.
-- Installed-artifact smoke command is defined and succeeds.
-
-**Affected contract:** `SPEC.md` Sections 1, 2, 15; add a changelog entry when behavior ships.
+**Affected contract:** `SPEC.md` Sections 1–3, 15–16; runtime behavior is recorded in `CHANGELOG.md`.
 
 ### CONTRACT-001 — Implement versioned schemas
 
-**Status:** Blocked by CORE-001
+**Status:** Complete.
 
-**Deliverable:** Add request/result/capability schemas and runtime validation for operations, ranges, errors, diagnostics, truncation, and match fields.
+**Deliverable:** Maintained request/result/capability JSON schemas and Ajv runtime validation for operations, ranges, IDs, enums, diagnostics, truncation, limits, project selection, and result envelopes.
 
-**Acceptance checks:**
-
-- Valid illustrative examples in `SPEC.md` validate against maintained schemas.
-- Invalid root, range, limit, operation, and enum values produce structured errors.
+**Acceptance evidence:** `npm run verify` validates all six operations, valid results/capabilities, invalid operation/root/range/limit/enum inputs, and CLI JSON/error behavior.
 
 **Affected contract:** `SPEC.md` Sections 3–6, 11, 14.
 
 ### DISCOVERY-001 — Implement bounded read-only discovery
 
-**Status:** Blocked by CORE-001
+**Status:** Complete.
 
-**Deliverable:** Implement canonical root validation, path containment, deterministic traversal, ignore rules, secret exclusions, file-size/file-count/byte limits, and parse diagnostics.
+**Deliverable:** Canonical root validation, explicit symlink containment, deterministic traversal, `.gitignore`, include/exclude precedence, secret exclusions, file/byte/result limits, timeout checks, and parse diagnostics.
 
-**Acceptance checks:**
-
-- A symlink or path outside root is rejected.
-- Fixture operations do not modify tracked, untracked, or ignored repository files.
-- Limit hits return `partial` with explicit truncation reasons.
+**Acceptance evidence:** Security tests cover outside-root paths, external symlinks, directory symlinks, ignored and secret files, no-write/no-execution behavior, and explicit truncation reasons.
 
 **Affected contract:** `SPEC.md` Sections 12–13.
 
 ### TS-001 — Implement TypeScript project selection and symbols
 
-**Status:** Blocked by CORE-001 and CONTRACT-001
+**Status:** Complete.
 
-**Deliverable:** Build a deterministic TypeScript Program and normalize declarations into the public symbol taxonomy.
+**Deliverable:** Deterministic one-config/multiple-config/no-config project selection, fixed fallback options, selected-config filtering, path aliases, external-file exclusion, project-reference reporting, normalized declaration kinds, ranges, qualified names, exported state, and versioned IDs.
 
-**Acceptance checks:**
-
-- Symbols are extracted from the TypeScript fixture set with stable paths, kinds, ranges, and IDs.
-- Multiple `tsconfig` behavior is covered by tests and reflected in diagnostics.
+**Acceptance evidence:** TypeScript tests cover aliases, project references, overloads, default/anonymous exports, declaration merging, namespaces, stable POSIX paths, and UTF-16 range positions.
 
 **Affected contract:** `SPEC.md` Sections 3, 4, 7, 8.
 
 ### TS-002 — Implement definitions and references
 
-**Status:** Blocked by TS-001
+**Status:** Complete.
 
-**Deliverable:** Resolve definitions, import aliases, and supported references using compiler/checker evidence; report unsupported cases honestly.
+**Deliverable:** Compiler/checker-backed definitions, import aliases, source-position resolution, overload/ambiguity reporting, and semantic reference traversal that excludes comments and string literals.
 
-**Acceptance checks:**
-
-- Alias and class-method fixtures resolve to the intended declaration.
-- Comments and string literals never become semantic references.
-- Ambiguous no-context queries return bounded matches without selecting arbitrarily.
+**Acceptance evidence:** Golden tests cover alias and method references, context-free ambiguity, source positions, no-match diagnostics, and false positives.
 
 **Affected contract:** `SPEC.md` Sections 5, 6, 10.
 
 ### TS-003 — Implement explicit implementations
 
-**Status:** Blocked by TS-001
+**Status:** Complete.
 
-**Deliverable:** Resolve explicit `implements`, `extends`, and supported abstract-method implementation relationships without claiming complete structural typing.
+**Deliverable:** Explicit `implements`, `extends`, and supported abstract-method override relationships, with no structural, dynamic, mixin, or runtime-patching claims.
 
-**Acceptance checks:**
-
-- Interface/class and base/derived fixtures produce the documented relations.
-- Structural or dynamic cases outside the supported subset return partial, candidate, or unsupported evidence.
+**Acceptance evidence:** Fixtures distinguish implementation from inheritance and return partial semantic-unavailable evidence for unsupported structural cases.
 
 **Affected contract:** `SPEC.md` Sections 2, 5, 11.
 
 ### API-001 — Implement shared library and CLI
 
-**Status:** Blocked by TS-002
+**Status:** Complete.
 
-**Deliverable:** Expose `getCapabilities`, `searchSymbols`, `findDefinition`, `findReferences`, `findImplementations`, and `listSymbols` over the same core.
+**Deliverable:** `getCapabilities`, `searchSymbols`, `findDefinition`, `findReferences`, `findImplementations`, `listSymbols`, and `execute` over one core; separate CLI position flags; JSON stdout, stderr diagnostics, and exit codes.
 
-**Acceptance checks:**
+**Acceptance evidence:** CLI/library parity, deterministic repeated output, stdout/stderr separation, complete/partial/error exits, and packaged API tests pass.
 
-- CLI JSON and library results are equivalent for the same request.
-- Output is stable across repeated runs and writes no source or cache files.
-
-**Affected contract:** `SPEC.md` Sections 2, 3, 6, 9.
+**Affected contract:** `SPEC.md` Sections 2, 3, 6, 9, 15.
 
 ### VERIFY-001 — Add golden, security, and package tests
 
-**Status:** Blocked by implementation tasks
+**Status:** Complete.
 
-**Deliverable:** Add the TypeScript fixture matrix, malformed/ignored/symlink/limit fixtures, stable ordering checks, and installed-package smoke tests.
+**Deliverable:** TypeScript fixture matrix, malformed/config/ignored/symlink/limit fixtures, stable ordering checks, read-only checks, capability checks, and installed-package smoke coverage.
 
-**Acceptance checks:**
+**Acceptance evidence:** `npm run verify`, `npm run capability:check`, and `npm run smoke:pack` pass; the latter runs outside the source checkout.
 
-- TS-01 through TS-05 and the documented false-positive, truncation, path, and read-only cases pass.
-- `npm pack` or the selected package equivalent runs outside the source checkout.
-
-**Affected contract:** All implemented `SPEC.md` sections; add changelog entry for the release behavior.
+**Affected contract:** All implemented `SPEC.md` sections.
 
 ### BENCH-001 — Establish performance baseline
 
-**Status:** Planned
+**Status:** Complete for baseline measurement.
 
-**Deliverable:** Measure files, bytes, parse/resolution/total time, memory, matches, and truncation on small, medium, and large fixtures.
+**Deliverable:** Reproducible generated small, medium, and large fixtures with separate cold and warm in-memory measurements for files, bytes, time, memory, matches, and truncation.
 
-**Acceptance checks:**
+**Acceptance evidence:** `BENCHMARK.md` is checked by `npm run benchmark:check`. It records evidence without claiming an unmeasured latency threshold.
 
-- Results distinguish cold and warm in-memory runs.
-- No latency acceptance threshold is claimed before the baseline is reviewed.
+## Verification status
+
+The full V1 verification commands are:
+
+```bash
+npm ci
+npm run verify
+npm run smoke:pack
+npm run capability:check
+npm run benchmark:check
+npm run docs:check
+git diff --check
+```
+
+`npm run verify` runs static safety checks, typecheck, build, and the Node test suite. Packaging, capability, benchmark, and documentation checks are separate reproducible gates. No network, deployment, release, or push is performed by these project commands except dependency installation needed for setup and the package smoke test.
 
 ## Blockers and next step
 
-The immediate blocker is the absence of a package/toolchain and implementation. The next safe step is `CORE-001`, followed by `CONTRACT-001`; parser work must not begin before the public contract and TypeScript project model are executable and tested.
+No actionable V1 TypeScript task remains blocked. Future language adapters, ecosystem integration, performance optimization, and release readiness remain explicitly proposed or in progress in `ROADMAP.md` and require separate scope approval.

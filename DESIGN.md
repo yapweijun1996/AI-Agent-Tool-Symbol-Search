@@ -2,96 +2,87 @@
 
 | Field | Value |
 |---|---|
-| Status | Proposed |
+| Status | Active |
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-07 |
-| Implementation baseline | Repository contains no runtime, package manifest, tests, schemas, or fixtures yet |
+| Implementation baseline | V1 TypeScript vertical slice is implemented in the current working tree; no package has been published |
 
-## 1. Purpose
+## 1. Purpose and boundary
 
-`agent-symbol-search` is intended to be a deterministic, local-first, read-only symbol-navigation engine for coding agents. It answers where a symbol is defined, referenced, or implemented without returning an entire repository or executing project code.
+`agent-symbol-search` is a deterministic, local-first, read-only symbol-navigation engine for coding agents. It answers where a symbol is defined, referenced, or explicitly implemented without returning an entire repository or executing project code.
 
-This document describes the target architecture. It does **not** claim that the architecture is implemented. The normative target behavior is in [`SPEC.md`](./SPEC.md).
+The implementation locates code; it does not return source bodies. `agent-code-slice` remains responsible for exact source extraction.
 
-## 2. Current state
+## 2. Verified current state
 
-The current repository is an initial documentation-only baseline. The only committed project file is `.gitattributes`; no CLI, library API, capability registry, parser adapter, schema, test, fixture, or benchmark exists yet.
+The working tree now contains a Node.js/TypeScript package, JSON schemas, a CLI, a library API, TypeScript fixtures, contract tests, security tests, and a benchmark baseline. The package is version `0.1.0` and is unreleased. The original documentation changes in the working tree are preserved; they are not treated as released history.
 
-Therefore:
-
-- no operation is currently shipped;
-- no language is currently supported by executable code;
-- no performance or precision claim has been measured;
-- all implementation and support statements below are proposed decisions.
+The executable TypeScript capability is verified by the test suite and packaged-artifact smoke test. JavaScript, Python, and CFML remain proposed adapters. No precision, latency, or memory threshold is claimed beyond the measurements in `BENCHMARK.md`.
 
 ## 3. V1 delivery boundary
 
-The first implementation milestone is deliberately narrow:
+V1.0 provides:
 
-### V1.0 target
+- TypeScript source discovery and normalized symbol extraction;
+- exact, prefix, and substring declaration search;
+- compiler/checker-backed definitions, references, and import aliases;
+- explicit `implements`, `extends`, and supported abstract-method implementation relationships;
+- one shared core behind the library API and CLI;
+- versioned JSON results with stable locators, IDs, ranking, limits, ambiguity, and diagnostics;
+- bounded, read-only discovery with root, symlink, ignore, secret, and resource boundaries.
 
-- TypeScript source discovery and symbol extraction;
-- TypeScript definitions;
-- TypeScript references using compiler/checker evidence;
-- explicit `implements`, `extends`, and abstract-method implementation relationships;
-- CLI and library API sharing one core;
-- bounded JSON results;
-- read-only and path-boundary guarantees.
-
-### Later adapters
-
-- JavaScript reuses the TypeScript infrastructure after the TypeScript vertical slice is verified;
-- Python begins with structured AST symbols and bounded import heuristics;
-- CFML begins with an explicit parser/lexical subset and candidate confidence only where semantic resolution is unavailable.
-
-Python and CFML are not V1.0 shipped capabilities.
+The implementation deliberately does not claim complete structural typing or dynamic dispatch resolution.
 
 ## 4. Architecture
 
 ```text
 CLI / Library API
         |
-Request validation
+Request schema validation
         |
-Repository boundary + discovery
+Canonical repository root + bounded discovery
         |
-Language/project selection
+Deterministic TypeScript project selection
         |
-Language adapter
+TypeScript Program / checker
         |
-Resolver / index
+Declaration index + semantic traversal
         |
-Normalizer + confidence assignment
+Normalizer + symbol identity
         |
 Stable ranker + result limits
         |
 Versioned JSON result
 ```
 
-The intended source layout is:
+The implemented layout is:
 
 ```text
 src/
-  cli/
+  cli.ts
+  index.ts
+  types.ts
   core/
-  discovery/
-  adapters/typescript/
-  adapters/javascript/
-  adapters/python/
-  adapters/cfml/
-  ranking/
-  schema/
-  library/
+    discovery.ts
+    engine.ts
+    paths.ts
+    project.ts
+    ranking.ts
+    symbols.ts
+    validation.ts
+schemas/
+test/
+scripts/
 ```
 
-Directories are proposed only; they do not exist in the current checkout.
+`typescript` is used as a runtime dependency because search creates a compiler `Program`; `ajv`, `ignore`, and `minimatch` provide runtime schema and discovery behavior. Versions are pinned in `package.json` and `package-lock.json`. Node.js `>=20.0.0` is the supported engine range.
 
 ## 5. Ownership boundaries
 
 | Concern | Owner | Boundary |
 |---|---|---|
 | Repository structure, package manager, commands | `agent-project-profile` | Symbol search consumes project context; it does not re-profile the repository |
-| Symbol locations and relationships | `agent-symbol-search` | This project returns evidence and locators only |
+| Symbol locations and relationships | `agent-symbol-search` | This package returns evidence and locators only |
 | Exact source extraction | `agent-code-slice` | Symbol search does not return source bodies |
 | Blast radius and change risk | `agent-change-impact` | References are evidence, not impact conclusions |
 | Test selection | `agent-test-scope` | Symbol search does not select tests |
@@ -99,71 +90,73 @@ Directories are proposed only; they do not exist in the current checkout.
 
 ## 6. TypeScript project model
 
-The implementation MUST make project selection deterministic. It must support an explicit project/`tsconfig.json` input before relying on auto-discovery. Auto-discovery, when implemented, must document how multiple configs, project references, path aliases, JavaScript mode, and files outside the selected project are handled.
+Project selection is deterministic:
 
-The compiler version and effective project configuration are part of the resolver context. Results must not silently mix compiler configurations. External package files are excluded from repository results by default and may only be included through an explicit future option.
+1. An explicit `project` must resolve to an in-root existing `tsconfig*.json` file.
+2. Without `project`, the tool discovers `tsconfig*.json` files using the same bounded ignore and secret policy.
+3. Exactly one discovered config is selected.
+4. Multiple configs return an `INVALID_REQUEST` error with every candidate and an instruction to pass `project`; the first config is never selected.
+5. With no config, fixed fallback options are used: CommonJS/Node resolution, ES2022 target, strict checking, no emit, no JavaScript, and preserved JSX.
 
-The TypeScript compiler API provides syntax, symbols, aliases, and type-checker evidence, but reference discovery still requires controlled AST traversal and checker-based resolution. It is not treated as a turnkey find-references engine.
+A selected config's `include`/`files` set controls the Program, filtered to discovered in-root TypeScript files. `paths`, `baseUrl`, and module resolution are honored by the TypeScript compiler. Project references are reported as `SEMANTIC_RESOLUTION_UNAVAILABLE` and are not recursively built in V1. JavaScript enabled by a config is deliberately excluded because JavaScript is not a shipped adapter. Compiler version and selected project/fallback mode are present in `stats`.
 
-## 7. Contract decisions
+Compiler-resolved external package files may participate in type resolution, but only discovered in-root files can become result matches. This prevents `node_modules` and other external files from appearing as repository results.
 
-The target contract uses:
+## 7. Discovery, security, and limits
 
-- a versioned result envelope with `complete`, `partial`, and `error` states;
-- normalized symbol kinds across languages;
-- categorical confidence: `confirmed`, `strong`, `candidate`, `unknown`;
-- explicit relation values such as `definition`, `declaration`, `reference`, `implementation`, and `inheritance`;
+The root and every explicit path are canonicalized with `realpath`, then checked with a path-relative containment test. Explicit symlinks targeting outside the root fail. Directory and file symlinks are not followed during default traversal. Secret-like basenames (`.env`, `.env.*`, `*.pem`, `*.key`, `credentials.*`, and `secrets.*`) are always excluded, including when a pattern tries to include them.
+
+Traversal is sorted by path using locale-independent comparisons. `.gitignore` is honored. `--exclude` wins over all ordinary matching; `--include` acts as an allow-list and can override `.gitignore` and ordinary generated-directory filters. `.git`, symlink, secret, and root boundaries cannot be overridden. Default generated/vendor directories include `.git`, `node_modules`, `dist`, `build`, `coverage`, `.cache`, `vendor`, and `generated`.
+
+The resource defaults are:
+
+```text
+maximum files: 10,000
+maximum single file: 2 MiB
+maximum parsed bytes: 100 MiB
+default results: 50
+maximum results: 500
+cooperative timeout budget: 5 seconds
+```
+
+File, byte, result, and timeout limits set `truncation.truncated`, add a specific reason, and normally return `partial`. A syntax or project-configuration diagnostic also yields `partial` when usable evidence remains. No persistent repository cache is written. The timeout is cooperative: discovery, indexing, and reference traversal check a deadline; it is not presented as a hard process isolation guarantee.
+
+## 8. Read-only and execution boundary
+
+Source is read as data. The library never imports project modules, calls `eval` or `Function`, invokes child processes, installs dependencies, builds, tests, modifies the repository, accesses a network, or calls an LLM. Packaging and verification scripts may invoke local commands, but those are not search behavior and are outside the library entrypoint.
+
+## 9. Contract decisions
+
+The public result uses:
+
+- `schemaVersion: "1"` and status values `complete`, `partial`, and `error`;
+- normalized symbol kinds, relations, and categorical confidence;
 - 1-based lines, 0-based UTF-16 columns, and exclusive end positions;
-- stable POSIX-style repository-relative paths;
-- a versioned SHA-256 symbol identity that does not use line numbers;
-- deterministic ordering with a final stable tie-breaker;
-- diagnostics and truncation reasons instead of silent omission.
+- POSIX-style repository-relative paths;
+- SHA-256 symbol IDs that omit line numbers;
+- deterministic confidence/relation/name/context/path/position/ID ordering;
+- structured diagnostics and truncation reasons rather than silent omission.
 
-The full proposed contract is in [`SPEC.md`](./SPEC.md).
+TypeScript compiler/checker evidence is `confirmed`. Search declarations and semantic references use the same resolver label, `typescript-semantic`; heuristic evidence is not emitted as confirmed. Implementation results cover only explicit heritage and supported abstract overrides.
 
-## 8. Read-only and security boundary
+Symbol identity normalization removes comments and collapses whitespace from a declaration signature. Overload signatures retain their parameter/type differences; declaration-merged interfaces share the same normalized name/kind/header identity; anonymous default declarations use the stable name `default`; paths are normalized before hashing.
 
-Project source is data, never executable code. The implementation MUST NOT import project modules, call `eval`, install dependencies, build, test, modify the repository, access the network, or invoke an LLM during a search.
+## 10. Rejected and deferred alternatives
 
-The repository root and every explicit path must be canonicalized and verified to remain inside the root. Directory symlinks are not followed by default. Secret-like files and generated directories are excluded by default. Malformed or oversized files produce diagnostics or partial results rather than bypassing limits.
+- Regex-only semantic search is rejected for TypeScript definitions, references, and aliases.
+- Fuzzy search, user-supplied regex, and ReDoS-sensitive ranking are outside V1.
+- Persistent databases and caches are deferred until benchmark evidence justifies them.
+- Runtime imports, execution, and LLM calls are rejected by the read-only boundary.
+- Python, CFML, and JavaScript adapters are later phases, not current capabilities.
+- Structural typing, dynamic dispatch, mixins, and runtime patching are not confirmed implementations.
+- MCP wrapping, code slicing, change impact, and test selection remain separate tools.
 
-## 9. Resource and determinism model
+## 11. Completion evidence
 
-Initial limits are engineering budgets, not benchmarked guarantees:
+The V1 implementation is considered verified only with all of the following:
 
-- maximum files: 10,000;
-- maximum single file: 2 MiB;
-- maximum parsed bytes: 100 MiB;
-- default results: 50;
-- maximum results: 500;
-- target request budget: 5 seconds.
-
-The timeout must be implemented as cooperative cancellation or process/worker isolation; a configuration value alone is not a hard timeout. The implementation must measure cold and warm in-memory operation separately. No persistent repository cache is planned for V1.0.
-
-Stable behavior requires pinned dependency versions, deterministic discovery, locale-independent sorting, explicit path normalization, and a documented TypeScript project-selection algorithm.
-
-## 10. Rejected or deferred alternatives
-
-- **Regex-only semantic search:** rejected for TypeScript definitions, references, and aliases; it remains unsuitable for confirmed semantic evidence.
-- **Fuzzy or regex user search:** deferred because ranking, noise, and ReDoS behavior are not yet justified.
-- **Persistent repository database:** deferred until cold-scan benchmarks demonstrate a need.
-- **Runtime imports or execution:** rejected because they violate the read-only safety boundary.
-- **Mega-tool with code slicing and impact analysis:** rejected to preserve small context and ownership boundaries.
-- **Full Python/Python-type-checker and CFML runtime resolution in V1.0:** deferred until the TypeScript contract is verified.
-- **MCP runtime inside the core package:** deferred; a future adapter may wrap the same library API.
-
-## 11. Dependencies and risks
-
-Planned dependencies include Node.js, TypeScript Compiler API, a TypeScript test runner, and a JSON-schema validation approach. The exact package versions and runtime engine range are not selected in the current repository.
-
-Key risks are project/configuration selection, reference precision, TypeScript structural typing, platform path behavior, cancellation under large repositories, and semantic drift between documentation and generated capability output.
-
-## 12. Completion evidence
-
-This design is not complete as an implementation until the repository has:
-
-1. executable schemas and contract tests;
-2. a TypeScript vertical slice covering the V1.0 operations;
-3. security, bounds, ambiguity, and determinism tests;
-4. package/installed-artifact smoke tests;
-5. benchmark output for small, medium, and large fixtures.
+1. `npm run verify` passes type checking, static safety checks, build, contract tests, golden TypeScript fixtures, ambiguity, range/ID/order, project-selection, bounds, CLI/library parity, and read-only/security cases.
+2. `npm run smoke:pack` passes from a temporary directory outside the source checkout.
+3. `npm run capability:check` reports TypeScript V1 support and future adapters as proposed.
+4. `npm run benchmark:check` validates the cold/warm small, medium, and large baseline in `BENCHMARK.md`.
+5. `npm run docs:check` confirms documentation metadata, links, schemas, examples, and current/proposed claims.

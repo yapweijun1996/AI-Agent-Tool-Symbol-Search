@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Proposed |
+| Status | Active |
 | Applies to | `agent-symbol-search` and its repository documentation |
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-07 |
@@ -40,6 +40,7 @@ Each document has one primary responsibility. Do not duplicate authoritative req
 | `ROADMAP.md` | Planned work, sequencing, and explicitly labelled non-commitments | Future intent only |
 | `TASK.md` | Active implementation tasks and acceptance checks | Current delivery plan |
 | `CHANGELOG.md` | Released user-visible changes and migration notes | Historical release record |
+| `BENCHMARK.md` | Reproducible measured performance baseline and limitations | Benchmark evidence, not a product guarantee |
 
 If two documents disagree, `SPEC.md` governs runtime behavior, executable schemas/tests govern exact machine-readable behavior, and `ROADMAP.md` never overrides either.
 
@@ -248,15 +249,17 @@ The change is ready when:
 - [ ] links and commands work from a clean checkout;
 - [ ] the final diff contains no unrelated documentation churn.
 
-## 13. Initial repository baseline
+## 13. Current implementation baseline
 
-Until implementation exists, the following documents are proposals and MUST NOT be presented as shipped capability:
+The V1 TypeScript vertical slice is implemented and verified in the current working tree, but package `0.1.0` is unreleased. The following documents now describe the verified implementation and its boundaries:
 
-- `README.md`: product overview and clean-start instructions;
-- `DESIGN.md`: architecture proposal;
-- `SPEC.md`: versioned contract proposal;
-- `EPIC.md`: product outcome and delivery scope;
-- `ROADMAP.md`: implementation sequence;
-- `TASK.md`: current delivery tasks.
+- `README.md`: product overview, quick start, support matrix, and verification commands;
+- `DESIGN.md`: implemented architecture, ownership boundaries, and trade-offs;
+- `SPEC.md`: schema-backed V1 request/result contract;
+- `EPIC.md`: completed TypeScript vertical-slice outcome and non-goals;
+- `ROADMAP.md`: completed V1 phases and proposed future phases;
+- `TASK.md`: evidence-backed delivery status;
+- `CHANGELOG.md`: unreleased runtime behavior and documentation history;
+- `BENCHMARK.md`: measured baseline and explicit performance limitations.
 
-The first implementation milestone SHOULD establish the contract and TypeScript vertical slice before expanding language coverage. Documentation for Python and CFML MUST preserve the stated distinction between structured/heuristic support and confirmed semantic resolution.
+Documentation for JavaScript, Python, and CFML MUST preserve the distinction between proposed/structured/heuristic support and confirmed semantic resolution. A future public release MUST repeat the clean-checkout, package, capability, schema, fixture, bounded-result, read-only, and platform-specific review gates.
