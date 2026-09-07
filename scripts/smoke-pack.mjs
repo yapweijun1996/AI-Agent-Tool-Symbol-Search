@@ -5,17 +5,19 @@ import { join, resolve } from "node:path";
 
 const repository = resolve(".");
 const fixtureRoot = resolve("test/fixtures/typescript");
+const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
+const cliExecutable = process.platform === "win32" ? "agent-symbol-search.cmd" : "agent-symbol-search";
 const temporary = mkdtempSync(join(tmpdir(), "agent-symbol-search-pack-"));
 try {
-  execFileSync("npm", ["run", "build"], { cwd: repository, stdio: "inherit" });
-  const packOutput = execFileSync("npm", ["pack", "--json", "--pack-destination", temporary], { cwd: repository, encoding: "utf8" });
+  execFileSync(npmExecutable, ["run", "build"], { cwd: repository, stdio: "inherit" });
+  const packOutput = execFileSync(npmExecutable, ["pack", "--json", "--pack-destination", temporary], { cwd: repository, encoding: "utf8" });
   const packageFile = JSON.parse(packOutput)[0]?.filename;
   if (!packageFile) throw new Error("npm pack did not report a package file");
   const archive = join(temporary, packageFile);
   const installRoot = join(temporary, "installed");
-  execFileSync("npm", ["install", "--prefix", installRoot, "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", archive], { cwd: repository, stdio: "inherit" });
+  execFileSync(npmExecutable, ["install", "--prefix", installRoot, "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", archive], { cwd: repository, stdio: "inherit" });
 
-  const cli = join(installRoot, "node_modules", ".bin", "agent-symbol-search");
+  const cli = join(installRoot, "node_modules", ".bin", cliExecutable);
   const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--project", "tsconfig.json", "--symbol", "resolveConfig"], { encoding: "utf8" });
   if (cliRun.status !== 0) throw new Error(`packaged CLI exited ${cliRun.status}: ${cliRun.stderr}`);
   const cliResult = JSON.parse(cliRun.stdout);
