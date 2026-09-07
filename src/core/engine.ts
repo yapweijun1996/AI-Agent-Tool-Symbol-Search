@@ -410,12 +410,16 @@ function derivedFrom(
   return false;
 }
 
+function isAmbientDeclaration(node: ts.Node): boolean {
+  return node.getSourceFile().isDeclarationFile || Boolean(ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Ambient);
+}
+
 function hasAbstractModifier(node: ts.Node): boolean {
   return Boolean(ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Abstract);
 }
 
 function isConcreteImplementationMember(node: ts.Node): boolean {
-  if (hasAbstractModifier(node) || ts.isMethodSignature(node) || ts.isPropertySignature(node)) return false;
+  if (isAmbientDeclaration(node) || hasAbstractModifier(node) || ts.isMethodSignature(node) || ts.isPropertySignature(node)) return false;
   if (ts.isMethodDeclaration(node)) return Boolean(node.body);
   if (ts.isGetAccessorDeclaration(node) || ts.isSetAccessorDeclaration(node)) return Boolean(node.body);
   if (ts.isPropertyDeclaration(node)) {
@@ -425,7 +429,7 @@ function isConcreteImplementationMember(node: ts.Node): boolean {
 }
 
 function isConcreteClass(node: ts.ClassDeclaration | ts.ClassExpression): boolean {
-  return !hasAbstractModifier(node);
+  return !isAmbientDeclaration(node) && !hasAbstractModifier(node);
 }
 
 function memberType(checker: ts.TypeChecker, record: DeclarationRecord): ts.Type | undefined {
@@ -446,7 +450,7 @@ function abstractMethodMatches(context: ProjectContext, index: SymbolIndex, symb
   if (!context.checker) return [];
   const abstractTargets = definitionRecords(index, symbols).filter((record) => {
     const node = record.node;
-    return (ts.isMethodDeclaration(node) || ts.isMethodSignature(node) || ts.isPropertyDeclaration(node) || ts.isPropertySignature(node) || ts.isGetAccessorDeclaration(node) || ts.isSetAccessorDeclaration(node)) && hasAbstractModifier(node);
+    return !isAmbientDeclaration(node) && (ts.isMethodDeclaration(node) || ts.isMethodSignature(node) || ts.isPropertyDeclaration(node) || ts.isPropertySignature(node) || ts.isGetAccessorDeclaration(node) || ts.isSetAccessorDeclaration(node)) && hasAbstractModifier(node);
   });
   const matches: Match[] = [];
   if (abstractTargets.length === 0) return matches;
@@ -473,7 +477,7 @@ function implementationMatches(context: ProjectContext, index: SymbolIndex, symb
   for (const node of index.classLikeNodes) {
     if (!isClassNode(node) && !ts.isInterfaceDeclaration(node)) continue;
     const record = classLikeRecord(index, node);
-    if (!record || record.isAlias) continue;
+    if (!record || record.isAlias || isAmbientDeclaration(node)) continue;
     for (const heritage of heritageSymbols(context.checker, node, ts.SyntaxKind.ImplementsKeyword)) {
       if (heritage.symbol && symbols.has(heritage.symbol)) {
         matches.push(makeMatch(context, record, "implementation", node, record.nameNode));

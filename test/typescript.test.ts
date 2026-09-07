@@ -138,6 +138,11 @@ test("explicit inheritance and implementation relationships are distinct", () =>
   assert.equal(incompatible.status, "partial");
   assert.equal(incompatible.data.matches.length, 0);
 
+  const ambient = findImplementations({ root: fixtureRoot, symbol: "value" });
+  assert.equal(ambient.status, "partial");
+  assert.equal(ambient.data.matches.length, 0);
+  assert.ok(!ambient.data.matches.some((match) => match.path.endsWith(".d.ts")));
+
   const structuralResult = findImplementations({ root: fixtureRoot, symbol: "StructuralAdapter" });
   assert.equal(structuralResult.status, "partial");
   assert.ok(structuralResult.diagnostics.some((item) => item.code === "SEMANTIC_RESOLUTION_UNAVAILABLE"));
