@@ -137,7 +137,7 @@ The public result uses:
 - deterministic confidence/relation/name/context/path/position/ID ordering;
 - structured diagnostics and truncation reasons rather than silent omission.
 
-TypeScript compiler/checker evidence is `confirmed`. Search declarations and semantic references use the same resolver label, `typescript-semantic`; heuristic evidence is not emitted as confirmed. Implementation results cover only explicit heritage and supported abstract overrides.
+TypeScript compiler/checker evidence is `confirmed`. Search declarations and semantic references use the same resolver label, `typescript-semantic`; heuristic evidence is not emitted as confirmed. Implementation results cover only explicit `implements`/`extends` on class declarations or variable-bound class expressions and supported abstract overrides.
 
 Symbol identity normalization removes comments and collapses whitespace from a declaration signature. Overload signatures retain their parameter/type differences; declaration-merged interfaces share the same normalized name/kind/header identity; anonymous default declarations use the stable name `default`; paths are normalized before hashing.
 

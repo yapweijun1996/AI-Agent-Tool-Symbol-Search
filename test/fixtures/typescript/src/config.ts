@@ -24,6 +24,28 @@ export class StructuralAdapter {
   }
 }
 
+export interface ExpressionAdapter {
+  load(): string;
+}
+
+export const ExpressionAdapterImpl = class implements ExpressionAdapter {
+  public load(): string {
+    return "expression";
+  }
+};
+
+export class ExpressionBase {}
+
+export const ExpressionChild = class extends ExpressionBase {
+  public run(input: string): string {
+    return `expression-child:${input}`;
+  }
+};
+
+export const { bindingValue: exportedBinding } = { bindingValue: "exported" };
+const { localValue: localBinding } = { localValue: "local" };
+void localBinding;
+
 export function resolveConfig(name: string): string;
 export function resolveConfig(name: number): string;
 export function resolveConfig(name: string | number): string {

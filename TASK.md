@@ -10,7 +10,7 @@
 
 ## Current repository truth
 
-- `HEAD` is the historical documentation baseline; the current working tree contains the V1 package and verification artifacts described below.
+- `HEAD` is the current V1 implementation line; the historical documentation-only baseline is an ancestor in Git history, not the current repository state. The exact checked-out commit is recorded by `git log --oneline --decorate -5` in the verification evidence.
 - The package has no published release and no remote branch has been pushed by this work.
 - JavaScript, Python, and CFML are proposed future adapters, not current capabilities.
 - No task is considered complete from documentation alone; each completed task below has executable evidence.
@@ -23,7 +23,7 @@
 
 The design, contract, epic, roadmap, task plan, README, documentation standard, and changelog distinguish proposed behavior from shipped/verified behavior and preserve the original documentation changes.
 
-**Evidence:** `git ls-tree -r --name-only HEAD` shows the historical baseline; `npm run docs:check` checks current metadata, links, contract markers, and schemas.
+**Evidence:** `git log --oneline --decorate -5` and `git status --short --branch` identify the implementation-bearing checkout; `npm run docs:check` checks current metadata, links, contract markers, runtime claims, and schemas.
 
 ## Completed V1 implementation tasks
 
@@ -63,7 +63,7 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 
 **Deliverable:** Deterministic one-config/multiple-config/no-config project selection, fixed fallback options, selected-config filtering, path aliases, external-file exclusion, project-reference reporting, normalized declaration kinds, ranges, qualified names, exported state, and versioned IDs.
 
-**Acceptance evidence:** TypeScript tests cover aliases, project references, overloads, default/anonymous exports, declaration merging, namespaces, stable POSIX paths, and UTF-16 range positions.
+**Acceptance evidence:** TypeScript tests cover aliases, project references, overloads, default/anonymous exports, declaration merging, namespaces, exported variable/binding declarations, class-expression owners, stable POSIX paths, and UTF-16 range positions.
 
 **Affected contract:** `SPEC.md` Sections 3, 4, 7, 8.
 
@@ -81,9 +81,9 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 
 **Status:** Complete.
 
-**Deliverable:** Explicit `implements`, `extends`, and supported abstract-method override relationships, with no structural, dynamic, mixin, or runtime-patching claims.
+**Deliverable:** Explicit `implements` and `extends` relationships for class declarations and variable-bound class expressions, plus supported abstract-method overrides, with no structural, dynamic, mixin, or runtime-patching claims.
 
-**Acceptance evidence:** Fixtures distinguish implementation from inheritance and return partial semantic-unavailable evidence for unsupported structural cases.
+**Acceptance evidence:** Fixtures distinguish implementation from inheritance for declarations and class expressions, cover exported-state regressions, and return partial semantic-unavailable evidence for unsupported structural cases.
 
 **Affected contract:** `SPEC.md` Sections 2, 5, 11.
 

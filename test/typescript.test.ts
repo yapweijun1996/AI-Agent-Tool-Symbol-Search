@@ -31,6 +31,11 @@ test("symbols lists nested declarations, normalized kinds, and UTF-16 positions"
   assert.equal(kinds.get("get"), "method");
   assert.equal(kinds.get("key"), "parameter");
   assert.equal(kinds.get("projectName"), "constant");
+  const exportedConstant = result.data.matches.find((match) => match.name === "projectName");
+  assert.equal(exportedConstant?.exported, true);
+  assert.equal(result.data.matches.find((match) => match.name === "commentOnly")?.exported, false);
+  assert.equal(result.data.matches.find((match) => match.name === "exportedBinding")?.exported, true);
+  assert.equal(result.data.matches.find((match) => match.name === "localBinding")?.exported, false);
   const adapter = result.data.matches.find((match) => match.name === "FileAdapter");
   assert.equal(adapter?.nameRange?.start.line, 9);
   assert.equal(adapter?.nameRange?.start.column, 13);
@@ -73,6 +78,14 @@ test("explicit inheritance and implementation relationships are distinct", () =>
   const baseResult = findImplementations({ root: fixtureRoot, symbol: "BaseService" });
   assert.equal(baseResult.status, "complete");
   assert.deepEqual(baseResult.data.matches.map((match) => [match.name, match.relation]), [["ChildService", "inheritance"]]);
+
+  const expressionInterfaceResult = findImplementations({ root: fixtureRoot, symbol: "ExpressionAdapter" });
+  assert.equal(expressionInterfaceResult.status, "complete");
+  assert.deepEqual(expressionInterfaceResult.data.matches.map((match) => [match.name, match.kind, match.relation]), [["ExpressionAdapterImpl", "class", "implementation"]]);
+
+  const expressionBaseResult = findImplementations({ root: fixtureRoot, symbol: "ExpressionBase" });
+  assert.equal(expressionBaseResult.status, "complete");
+  assert.deepEqual(expressionBaseResult.data.matches.map((match) => [match.name, match.kind, match.relation]), [["ExpressionChild", "class", "inheritance"]]);
 
   const methodResult = findImplementations({ root: fixtureRoot, symbol: "run" });
   assert.equal(methodResult.status, "complete");

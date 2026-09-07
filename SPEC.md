@@ -93,7 +93,7 @@ confirmed, strong, candidate, unknown
 
 Compiler/checker evidence may be `confirmed`. AST/import evidence without complete semantic resolution is at most `strong`; lexical or heuristic evidence is `candidate`; unsupported or insufficient evidence is `unknown`. The V1 TypeScript adapter emits confirmed compiler/checker evidence and does not label structural guesses as confirmed.
 
-Implementation results are limited to explicit `implements`, `extends`, and supported abstract-method overrides. Structural assignability, dynamic dispatch, mixins, and runtime monkey-patching are not confirmed implementations. When an implementation query has no explicit relationship but semantic coverage is insufficient to make a stronger claim, the result is partial with `SEMANTIC_RESOLUTION_UNAVAILABLE`.
+Implementation results are limited to explicit `implements` and `extends` on class declarations or variable-bound class expressions, plus supported abstract-method overrides. Structural assignability, dynamic dispatch, mixins, and runtime monkey-patching are not confirmed implementations. When an implementation query has no explicit relationship but semantic coverage is insufficient to make a stronger claim, the result is partial with `SEMANTIC_RESOLUTION_UNAVAILABLE`.
 
 ## 6. Result envelope
 

@@ -25,6 +25,7 @@ export interface SymbolIndex {
   recordByNode: Map<ts.Node, DeclarationRecord>;
   recordByNameNode: Map<ts.Node, DeclarationRecord>;
   recordsBySymbol: Map<ts.Symbol, DeclarationRecord[]>;
+  classLikeNodes: Array<ts.ClassDeclaration | ts.ClassExpression | ts.InterfaceDeclaration>;
   timedOut: boolean;
 }
 
@@ -149,13 +150,24 @@ function exportedState(node: ts.Node): boolean | undefined {
         return true;
       }
     }
-    if (ts.isVariableDeclaration(current) || ts.isBindingElement(current)) {
+    if (ts.isVariableDeclaration(current) || ts.isVariableDeclarationList(current) || ts.isBindingElement(current) || ts.isObjectBindingPattern(current) || ts.isArrayBindingPattern(current)) {
       current = current.parent;
       continue;
     }
     break;
   }
   return false;
+}
+
+function classExpressionVariableOwner(node: ts.ClassExpression): ts.VariableDeclaration | undefined {
+  let parent: ts.Node | undefined = node.parent;
+  while (parent && !ts.isSourceFile(parent)) {
+    if (ts.isVariableDeclaration(parent) && parent.initializer && parent.initializer.getStart() <= node.getStart() && parent.initializer.getEnd() >= node.getEnd()) {
+      return parent;
+    }
+    parent = parent.parent;
+  }
+  return undefined;
 }
 
 function positionFor(sourceFile: ts.SourceFile, position: number): { line: number; column: number } {
@@ -232,12 +244,16 @@ export function buildSymbolIndex(context: ProjectContext, deadline = Number.POSI
   const records: DeclarationRecord[] = [];
   const recordByNode = new Map<ts.Node, DeclarationRecord>();
   const recordByNameNode = new Map<ts.Node, DeclarationRecord>();
+  const classLikeNodes: Array<ts.ClassDeclaration | ts.ClassExpression | ts.InterfaceDeclaration> = [];
   let timedOut = false;
 
   const visit = (node: ts.Node): void => {
     if (Date.now() >= deadline) {
       timedOut = true;
       return;
+    }
+    if (ts.isClassDeclaration(node) || ts.isClassExpression(node) || ts.isInterfaceDeclaration(node)) {
+      classLikeNodes.push(node);
     }
     const kind = declarationKind(node);
     const nameNode = nodeNameNode(node);
@@ -269,6 +285,25 @@ export function buildSymbolIndex(context: ProjectContext, deadline = Number.POSI
     visit(sourceFile);
   }
 
+  const syntheticClassRecords: Array<{ record: DeclarationRecord; owner: DeclarationRecord }> = [];
+  for (const classNode of classLikeNodes) {
+    if (!ts.isClassExpression(classNode) || recordByNode.has(classNode)) continue;
+    const ownerNode = classExpressionVariableOwner(classNode);
+    const owner = ownerNode ? recordByNode.get(ownerNode) : undefined;
+    if (!owner) continue;
+    const synthetic: DeclarationRecord = {
+      ...owner,
+      node: classNode,
+      sourceFile: classNode.getSourceFile(),
+      kind: "class",
+      container: parentDeclarationName(owner.node, recordByNode),
+      qualifiedName: qualifiedName(owner.node, owner.name, recordByNode),
+      signature: normalizedSignature(classNode)
+    };
+    recordByNode.set(classNode, synthetic);
+    syntheticClassRecords.push({ record: synthetic, owner });
+  }
+
   for (const record of records) {
     record.container = parentDeclarationName(record.node, recordByNode);
     record.qualifiedName = qualifiedName(record.node, record.name, recordByNode);
@@ -287,6 +322,12 @@ export function buildSymbolIndex(context: ProjectContext, deadline = Number.POSI
     ].join("\n"), "utf8").digest("hex")}`;
   }
 
+  for (const { record, owner } of syntheticClassRecords) {
+    record.symbol = owner.symbol;
+    record.canonicalSymbol = owner.canonicalSymbol;
+    record.symbolId = owner.symbolId;
+  }
+
   records.sort((left, right) => {
     const leftPath = repositoryRelative(context.root.absolute, sourceFilePath(left.sourceFile));
     const rightPath = repositoryRelative(context.root.absolute, sourceFilePath(right.sourceFile));
@@ -301,7 +342,7 @@ export function buildSymbolIndex(context: ProjectContext, deadline = Number.POSI
     existing.push(record);
     recordsBySymbol.set(record.canonicalSymbol, existing);
   }
-  return { records, recordByNode, recordByNameNode, recordsBySymbol, timedOut };
+  return { records, recordByNode, recordByNameNode, recordsBySymbol, classLikeNodes, timedOut };
 }
 
 function sourceFilePath(sourceFile: ts.SourceFile): string {

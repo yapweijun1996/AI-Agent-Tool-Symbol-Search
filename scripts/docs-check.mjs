@@ -86,6 +86,15 @@ const completedWorkstreams = (epic.match(/\| [^|]+ \| Completed \|/g) ?? []).len
 if (completedWorkstreams < 7) fail(`EPIC.md: expected 7 completed V1 workstreams, found ${completedWorkstreams}`);
 if (/documentation-only initial baseline|no runtime implementation|No runtime, package manifest/.test(`${readme}\n${design}\n${task}`)) fail("current-status documents still contain stale documentation-only claims");
 if (/### Runtime[\s\S]*None\. No CLI/.test(changelog)) fail("CHANGELOG.md: runtime is still described as empty");
+if (/`HEAD` is the historical documentation baseline/i.test(task)) fail("TASK.md: HEAD is still described as a historical/baseline checkout");
+if (!task.includes("HEAD` is the current V1 implementation line")) fail("TASK.md: current HEAD reconciliation is missing");
+const gitHeadFiles = spawnSync("git", ["ls-tree", "-r", "--name-only", "HEAD"], { encoding: "utf8" });
+if (gitHeadFiles.error || gitHeadFiles.status !== 0) fail("Git evidence: unable to inspect HEAD");
+else {
+  for (const path of ["package.json", "src/index.ts", "schemas/request.schema.json"]) {
+    if (!gitHeadFiles.stdout.split(/\r?\n/).includes(path)) fail(`Git evidence: HEAD is missing implementation file ${path}`);
+  }
+}
 for (const document of [readme, design, spec]) {
   if (!document.includes("node_modules")) fail("documentation: node_modules boundary is missing");
 }
@@ -97,8 +106,12 @@ try {
   const capabilityValidation = api.validateCapabilities(capabilities);
   if (!capabilityValidation.valid) fail(`capabilities: runtime output failed schema validation: ${capabilityValidation.errors.join("; ")}`);
   const tsOperations = capabilities.languages?.typescript?.operations ?? {};
-  for (const operation of ["search", "symbols", "definition", "references"]) {
-    if (tsOperations[operation] !== "full") fail(`capabilities: TypeScript ${operation} is not full`);
+  const documentedSupport = { capabilities: "full", search: "full", symbols: "full", definition: "full", references: "full", implementations: "partial" };
+  for (const [operation, expected] of Object.entries(documentedSupport)) {
+    if (tsOperations[operation] !== expected) fail(`capabilities: TypeScript ${operation} is ${tsOperations[operation]}, expected ${expected}`);
+    const line = readme.split(/\r?\n/).find((candidate) => candidate.includes(`| \`${operation}\` |`));
+    const expectedLabel = expected === "full" ? "Full" : "Partial";
+    if (!line?.includes(`| ${expectedLabel} |`)) fail(`README.md: ${operation} support claim does not match runtime capability`);
   }
   if (tsOperations.implementations !== "partial") fail("capabilities: TypeScript implementations is not partial");
   for (const language of ["javascript", "python", "cfml"]) {

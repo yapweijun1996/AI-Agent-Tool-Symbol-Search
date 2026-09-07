@@ -342,7 +342,7 @@ function parentClassLike(index: SymbolIndex, node: ts.Node): DeclarationRecord |
   return undefined;
 }
 
-type HeritageOwner = ts.ClassDeclaration | ts.InterfaceDeclaration;
+type HeritageOwner = ts.ClassDeclaration | ts.ClassExpression | ts.InterfaceDeclaration;
 
 function heritageSymbols(checker: ts.TypeChecker, node: HeritageOwner, keyword: ts.SyntaxKind): Array<{ type: ts.ExpressionWithTypeArguments; symbol?: ts.Symbol }> {
   const result: Array<{ type: ts.ExpressionWithTypeArguments; symbol?: ts.Symbol }> = [];
@@ -355,14 +355,14 @@ function heritageSymbols(checker: ts.TypeChecker, node: HeritageOwner, keyword: 
   return result;
 }
 
-function isClassDeclarationNode(node: ts.Node): node is ts.ClassDeclaration {
-  return ts.isClassDeclaration(node);
+function isClassNode(node: ts.Node): node is ts.ClassDeclaration | ts.ClassExpression {
+  return ts.isClassDeclaration(node) || ts.isClassExpression(node);
 }
 
 function derivedFrom(
   context: ProjectContext,
   index: SymbolIndex,
-  classNode: ts.ClassDeclaration,
+  classNode: ts.ClassDeclaration | ts.ClassExpression,
   target: ts.Symbol,
   visiting = new Set<ts.Symbol>()
 ): boolean {
@@ -372,9 +372,11 @@ function derivedFrom(
   const nextVisiting = new Set(visiting).add(classRecord.canonicalSymbol);
   for (const heritage of heritageSymbols(context.checker, classNode, ts.SyntaxKind.ExtendsKeyword)) {
     if (heritage.symbol === target) return true;
-    for (const candidate of index.records) {
-      if (!candidate.canonicalSymbol || candidate.canonicalSymbol !== heritage.symbol || !isClassDeclarationNode(candidate.node)) continue;
-      if (derivedFrom(context, index, candidate.node, target, nextVisiting)) return true;
+    for (const candidateNode of index.classLikeNodes) {
+      if (!isClassNode(candidateNode)) continue;
+      const candidate = classLikeRecord(index, candidateNode);
+      if (!candidate?.canonicalSymbol || candidate.canonicalSymbol !== heritage.symbol) continue;
+      if (derivedFrom(context, index, candidateNode, target, nextVisiting)) return true;
     }
   }
   return false;
@@ -388,7 +390,7 @@ function abstractMethodMatches(context: ProjectContext, index: SymbolIndex, symb
   });
   const matches: Match[] = [];
   if (abstractTargets.length === 0) return matches;
-  const classNodes = index.records.filter((record) => ts.isClassDeclaration(record.node) && !record.isAlias).map((record) => record.node as ts.ClassDeclaration);
+  const classNodes = index.classLikeNodes.filter((node): node is ts.ClassDeclaration | ts.ClassExpression => isClassNode(node));
   for (const target of abstractTargets) {
     const targetContainer = parentClassLike(index, target.node);
     if (!targetContainer?.canonicalSymbol) continue;
@@ -408,10 +410,10 @@ function abstractMethodMatches(context: ProjectContext, index: SymbolIndex, symb
 function implementationMatches(context: ProjectContext, index: SymbolIndex, symbols: Set<ts.Symbol>): Match[] {
   if (!context.checker) return [];
   const matches: Match[] = [];
-  const classLikes = index.records.filter((record) => (ts.isClassDeclaration(record.node) || ts.isInterfaceDeclaration(record.node)) && !record.isAlias);
-  for (const record of classLikes) {
-    const node = record.node;
-    if (!ts.isClassDeclaration(node) && !ts.isInterfaceDeclaration(node)) continue;
+  for (const node of index.classLikeNodes) {
+    if (!isClassNode(node) && !ts.isInterfaceDeclaration(node)) continue;
+    const record = classLikeRecord(index, node);
+    if (!record || record.isAlias) continue;
     for (const heritage of heritageSymbols(context.checker, node, ts.SyntaxKind.ImplementsKeyword)) {
       if (heritage.symbol && symbols.has(heritage.symbol)) {
         matches.push(makeMatch(context, record, "implementation", node, record.nameNode));
