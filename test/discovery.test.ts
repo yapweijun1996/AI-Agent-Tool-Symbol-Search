@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import test from "node:test";
 import { createEngine, findDefinition, searchSymbols } from "../src";
 import { copyTypeScriptFixture, removeDirectory, snapshotFiles, temporaryDirectory, tryCreateSymlink, writeSource } from "./helpers";
@@ -79,6 +79,31 @@ test("project references are explicit and do not escape the selected project", (
     assert.equal(result.data.matches[0]?.path, "src/main.ts");
   } finally {
     removeDirectory(root);
+  }
+});
+
+test("outside-root project files are sanitized and produce partial evidence", () => {
+  const root = temporaryDirectory();
+  const outside = temporaryDirectory();
+  try {
+    const outsideFile = join(outside, "outside.ts");
+    writeSource(root, "src/main.ts", "export const selected = 1;\n");
+    writeSource(root, "tsconfig.json", JSON.stringify({
+      compilerOptions: { module: "CommonJS", target: "ES2022", noEmit: true },
+      files: ["src/main.ts", relative(root, outsideFile)]
+    }));
+    writeSource(outside, "outside.ts", "export const outside = 1;\n");
+
+    const result = searchSymbols({ root, symbol: "selected" });
+    assert.equal(result.status, "partial");
+    const outsideDiagnostics = result.diagnostics.filter((item) => item.code === "PATH_OUTSIDE_ROOT");
+    assert.ok(outsideDiagnostics.length >= 1);
+    assert.ok(outsideDiagnostics.every((item) => item.path === "tsconfig.json"));
+    assert.ok(outsideDiagnostics.every((item) => !item.message.includes(outside)));
+    assert.ok(outsideDiagnostics.every((item) => !item.path?.startsWith("/")));
+  } finally {
+    removeDirectory(root);
+    removeDirectory(outside);
   }
 });
 

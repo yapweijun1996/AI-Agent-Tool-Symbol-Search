@@ -30,15 +30,27 @@ test("symbols lists nested declarations, normalized kinds, and UTF-16 positions"
   assert.equal(kinds.get("FileAdapter"), "class");
   assert.equal(kinds.get("get"), "method");
   assert.equal(kinds.get("key"), "parameter");
-  assert.equal(kinds.get("projectName"), "constant");
-  const exportedConstant = result.data.matches.find((match) => match.name === "projectName");
+  assert.equal(result.data.matches.find((match) => match.qualifiedName === "projectName")?.kind, "constant");
+  const exportedConstant = result.data.matches.find((match) => match.qualifiedName === "projectName");
   assert.equal(exportedConstant?.exported, true);
   assert.equal(result.data.matches.find((match) => match.name === "commentOnly")?.exported, false);
   assert.equal(result.data.matches.find((match) => match.name === "exportedBinding")?.exported, true);
   assert.equal(result.data.matches.find((match) => match.name === "localBinding")?.exported, false);
+  assert.equal(result.data.matches.find((match) => match.qualifiedName === "localExportSpecifier")?.exported, true);
+  const reExport = searchSymbols({ root: fixtureRoot, symbol: "reExportedProjectName" });
+  assert.equal(reExport.data.matches.length, 1);
+  assert.equal(reExport.data.matches[0]?.exported, true);
   const adapter = result.data.matches.find((match) => match.name === "FileAdapter");
   assert.equal(adapter?.nameRange?.start.line, 9);
   assert.equal(adapter?.nameRange?.start.column, 13);
+  const constructors = result.data.matches.filter((match) => match.kind === "constructor");
+  assert.equal(constructors.length, 1);
+  assert.equal(constructors[0]?.name, "constructor");
+  assert.ok(constructors[0]?.nameRange);
+  assert.equal(constructors[0]?.nameRange?.start.line, adapter?.nameRange?.start.line + 1);
+  assert.equal(constructors[0]?.nameRange?.start.line, constructors[0]?.nameRange?.end.line);
+  const constructorSearch = searchSymbols({ root: fixtureRoot, symbol: "constructor" });
+  assert.deepEqual(constructorSearch.data.matches.map((match) => [match.name, match.kind, match.path]), [["constructor", "constructor", "src/config.ts"]]);
   assert.equal(listSymbols({ root: fixtureRoot, path: "src\\config.ts" }).data.matches.length, result.data.matches.length);
 });
 
@@ -55,7 +67,7 @@ test("a source position resolves an import alias to its semantic definition", ()
   const result = findDefinition({
     root: fixtureRoot,
     symbol: "ignored-query-name",
-    from: { path: "src/consumer.ts", line: 5, column: 9 }
+    from: { path: "src/consumer.ts", line: 6, column: 9 }
   });
   assert.equal(result.status, "complete");
   assert.equal(result.data.matches.length, 3);
@@ -63,11 +75,16 @@ test("a source position resolves an import alias to its semantic definition", ()
 });
 
 test("references use compiler symbols and ignore comments and string literals", () => {
+  const shorthand = findReferences({ root: fixtureRoot, symbol: "projectName" });
+  assert.equal(shorthand.status, "complete");
+  assert.ok(!shorthand.diagnostics.some((item) => item.code === "SYMBOL_NOT_FOUND"));
+  assert.ok(shorthand.data.matches.some((match) => match.relation === "reference" && match.path === "src/config.ts"));
+
   const result = findReferences({ root: fixtureRoot, symbol: "resolveConfig" });
   assert.equal(result.status, "complete");
   assert.ok(result.data.matches.some((match) => match.relation === "import_alias" && match.path === "src/consumer.ts"));
-  assert.ok(result.data.matches.some((match) => match.relation === "reference" && match.range.start.line === 5));
-  assert.ok(result.data.matches.every((match) => match.range.start.line !== 8 && match.range.start.line !== 9));
+  assert.ok(result.data.matches.some((match) => match.relation === "reference" && match.range.start.line === 6));
+  assert.ok(result.data.matches.every((match) => match.range.start.line !== 9 && match.range.start.line !== 10));
 });
 
 test("explicit inheritance and implementation relationships are distinct", () => {

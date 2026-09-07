@@ -98,7 +98,7 @@ Project selection is deterministic:
 4. Multiple configs return an `INVALID_REQUEST` error with every candidate and an instruction to pass `project`; the first config is never selected.
 5. With no config, fixed fallback options are used: CommonJS/Node resolution, ES2022 target, strict checking, no emit, no JavaScript, and preserved JSX.
 
-A selected config's `include`/`files` set controls the Program, filtered to discovered in-root TypeScript files. `paths`, `baseUrl`, and module resolution are honored by the TypeScript compiler. Project references are reported as `SEMANTIC_RESOLUTION_UNAVAILABLE` and are not recursively built in V1. JavaScript enabled by a config is deliberately excluded because JavaScript is not a shipped adapter. Compiler version and selected project/fallback mode are present in `stats`.
+A selected config's `include`/`files` set controls the Program, filtered to discovered in-root TypeScript files. Outside-root configured files are excluded with a repository-safe `PATH_OUTSIDE_ROOT` diagnostic attached to the selected config, and the result is partial. `paths`, `baseUrl`, and module resolution are honored by the TypeScript compiler. Project references are reported as `SEMANTIC_RESOLUTION_UNAVAILABLE` and are not recursively built in V1. JavaScript enabled by a config is deliberately excluded because JavaScript is not a shipped adapter. Compiler version and selected project/fallback mode are present in `stats`.
 
 Compiler-resolved external package files may participate in type resolution, but only discovered in-root files can become result matches. This prevents `node_modules` and other external files from appearing as repository results.
 

@@ -60,6 +60,11 @@ function canonicalFilePath(fileName: string): string {
   }
 }
 
+function safeConfigReferencePath(root: RootInfo, configDirectory: string, referencePath: string): string {
+  const absolute = canonicalFilePath(resolvePath(configDirectory, referencePath));
+  return isInsideRoot(root.absolute, absolute) ? repositoryRelative(root.absolute, absolute) : "<outside-root>";
+}
+
 function fallbackCompilerOptions(): ts.CompilerOptions {
   return {
     allowJs: false,
@@ -80,7 +85,8 @@ function sourceFilesForConfig(
   root: RootInfo,
   parsedFileNames: readonly string[],
   discovered: readonly DiscoveredFile[],
-  diagnostics: Diagnostic[]
+  diagnostics: Diagnostic[],
+  projectPath: string
 ): string[] {
   const discoveredByRelative = new Map(discovered.map((file) => [file.relativePath, file.absolutePath]));
   const names: string[] = [];
@@ -88,7 +94,7 @@ function sourceFilesForConfig(
   for (const fileName of parsedFileNames) {
     const absolute = canonicalFilePath(fileName);
     if (!isInsideRoot(root.absolute, absolute)) {
-      diagnostics.push(diagnostic("PATH_OUTSIDE_ROOT", "The TypeScript project references a file outside the repository root; it was excluded", "warning", fileName));
+      diagnostics.push(diagnostic("PATH_OUTSIDE_ROOT", "The TypeScript project references a file outside the repository root; it was excluded", "warning", projectPath, { excluded: true, reason: "outside-root-project-file" }));
       continue;
     }
     const relative = repositoryRelative(root.absolute, absolute);
@@ -209,10 +215,10 @@ export function buildProject(inputRoot: string, options: ProjectBuildOptions): P
           "Project references are recorded but are not recursively built in V1; only the selected tsconfig file set is analyzed",
           "warning",
           selectedProject,
-          { references: parsed.projectReferences.map((reference) => reference.path) }
+          { references: parsed.projectReferences.map((reference) => safeConfigReferencePath(root, dirname(explicitProjectPath), reference.path)) }
         ));
       }
-      rootNames = sourceFilesForConfig(root, parsed.fileNames, discoveredFiles, diagnostics);
+      rootNames = sourceFilesForConfig(root, parsed.fileNames, discoveredFiles, diagnostics, selectedProject!);
     }
   }
 

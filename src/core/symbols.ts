@@ -59,6 +59,9 @@ function declarationKind(node: ts.Node): { kind: SymbolKind; isAlias: boolean } 
 }
 
 function nodeNameNode(node: ts.Node): ts.Node | undefined {
+  if (ts.isConstructorDeclaration(node)) {
+    return node.getChildren(node.getSourceFile()).find((child) => child.kind === ts.SyntaxKind.ConstructorKeyword);
+  }
   if (ts.isImportClause(node)) return node.name ?? undefined;
   if (ts.isNamespaceImport(node) || ts.isImportSpecifier(node) || ts.isImportEqualsDeclaration(node) || ts.isExportSpecifier(node)) return node.name;
   if ("name" in node) {
@@ -71,6 +74,7 @@ function nodeNameNode(node: ts.Node): ts.Node | undefined {
 }
 
 function nodeName(node: ts.Node, nameNode: ts.Node | undefined): string | undefined {
+  if (ts.isConstructorDeclaration(node)) return "constructor";
   if (nameNode && (ts.isIdentifier(nameNode) || ts.isStringLiteral(nameNode) || ts.isNumericLiteral(nameNode))) {
     return nameNode.text;
   }
@@ -240,6 +244,18 @@ export function symbolAtNode(checker: ts.TypeChecker, node: ts.Node): ts.Symbol 
   return canonicalSymbol(checker, checker.getSymbolAtLocation(node));
 }
 
+function effectivelyExported(checker: ts.TypeChecker, record: DeclarationRecord): boolean {
+  const target = record.canonicalSymbol;
+  if (!target) return false;
+  const moduleSymbol = checker.getSymbolAtLocation(record.sourceFile);
+  if (!moduleSymbol) return false;
+  try {
+    return checker.getExportsOfModule(moduleSymbol).some((exported) => canonicalSymbol(checker, exported) === target);
+  } catch {
+    return false;
+  }
+}
+
 export function buildSymbolIndex(context: ProjectContext, deadline = Number.POSITIVE_INFINITY): SymbolIndex {
   const records: DeclarationRecord[] = [];
   const recordByNode = new Map<ts.Node, DeclarationRecord>();
@@ -307,10 +323,11 @@ export function buildSymbolIndex(context: ProjectContext, deadline = Number.POSI
   for (const record of records) {
     record.container = parentDeclarationName(record.node, recordByNode);
     record.qualifiedName = qualifiedName(record.node, record.name, recordByNode);
-    if (context.checker) {
+    if (context.checker && !ts.isConstructorDeclaration(record.node)) {
       const location = record.nameNode ?? record.node;
       record.symbol = context.checker.getSymbolAtLocation(location) ?? undefined;
       record.canonicalSymbol = canonicalSymbol(context.checker, record.symbol);
+      record.exported = record.exported || effectivelyExported(context.checker, record);
     }
     record.symbolId = `sha256-v1:${createHash("sha256").update([
       "symbol-id-v1",

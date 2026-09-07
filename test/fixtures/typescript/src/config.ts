@@ -7,6 +7,8 @@ export abstract class BaseService {
 }
 
 export class FileAdapter implements StorageAdapter {
+  public constructor() {}
+
   public get(key: string): string {
     return `file:${key}`;
   }
@@ -53,6 +55,9 @@ export function resolveConfig(name: string | number): string {
 }
 
 export const projectName = "agent-symbol-search";
+export const projectSnapshot = { projectName };
+const localExportSpecifier = "exported-through-specifier";
+export { localExportSpecifier };
 
 const commentOnly = "resolveConfig is only text here";
 void commentOnly;

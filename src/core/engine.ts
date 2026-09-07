@@ -125,7 +125,7 @@ function resultStatus(diagnostics: readonly Diagnostic[], truncation: Truncation
   if (diagnostics.some((item) => item.severity === "error")) {
     return "error";
   }
-  if (truncation.truncated || diagnostics.some((item) => item.code === "PARSE_ERROR" || item.code === "TIMEOUT" || item.code === "SEMANTIC_RESOLUTION_UNAVAILABLE")) {
+  if (truncation.truncated || diagnostics.some((item) => item.code === "PARSE_ERROR" || item.code === "PATH_OUTSIDE_ROOT" || item.code === "TIMEOUT" || item.code === "SEMANTIC_RESOLUTION_UNAVAILABLE")) {
     return "partial";
   }
   return "complete";
@@ -313,7 +313,8 @@ function referenceMatches(
       const symbol = symbolAtNode(context.checker!, node);
       if (symbol && symbols.has(symbol)) {
         const target = primary.get(symbol);
-        if (target && (!record || record.isAlias)) {
+        const isShorthandPropertyReference = ts.isShorthandPropertyAssignment(node.parent) && node === node.parent.name;
+        if (target && (!record || record.isAlias || isShorthandPropertyReference)) {
           matches.push(makeMatch(context, target, record?.isAlias ? "import_alias" : "reference", node, node, target));
         }
       }

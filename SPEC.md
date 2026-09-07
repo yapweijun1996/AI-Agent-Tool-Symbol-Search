@@ -122,7 +122,7 @@ CLI JSON is emitted only on stdout. Human-readable copies of diagnostics are emi
 
 ## 7. Match shape
 
-A match has this shape:
+A match has this shape; constructor declarations use the stable public name `constructor` and a name range covering the constructor keyword:
 
 ```json
 {
@@ -239,7 +239,7 @@ Default discovery:
 - skips `.env`, `.env.*`, `*.pem`, `*.key`, `credentials.*`, and `secrets.*` by default;
 - treats project files as data and never imports or executes them.
 
-Precedence is deterministic: root/canonical containment, symlink/secret boundaries, and `node_modules` exclusion cannot be overridden; `--exclude` wins over ordinary matching; `--include` is an allow-list that can override `.gitignore` and ordinary generated-directory filters. Explicit file requests still undergo root, symlink, secret, extension, and project-file checks.
+Precedence is deterministic: root/canonical containment, symlink/secret boundaries, and `node_modules` exclusion cannot be overridden; `--exclude` wins over ordinary matching; `--include` is an allow-list that can override `.gitignore` and ordinary generated-directory filters. Explicit file requests still undergo root, symlink, secret, extension, and project-file checks. A configured project file outside the root is excluded, its diagnostic points to the in-root project configuration without exposing the outside path, and the result is `partial`.
 
 ## 13. Resource limits
 

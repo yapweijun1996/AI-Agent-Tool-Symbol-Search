@@ -53,7 +53,7 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 
 **Deliverable:** Canonical root validation, explicit symlink containment, deterministic traversal, `.gitignore`, include/exclude precedence, secret exclusions, file/byte/result limits, timeout checks, and parse diagnostics.
 
-**Acceptance evidence:** Security tests cover outside-root paths, external symlinks, directory symlinks, ignored and secret files, no-write/no-execution behavior, and explicit truncation reasons.
+**Acceptance evidence:** Security tests cover outside-root paths, external symlinks, directory symlinks, ignored and secret files, outside-root project-file sanitization/partial status, no-write/no-execution behavior, and explicit truncation reasons.
 
 **Affected contract:** `SPEC.md` Sections 12–13.
 
