@@ -83,9 +83,13 @@ try {
     if (!existsSync(reportPath)) throw new Error("BENCHMARK.md is missing; run `node scripts/benchmark.mjs` to create it");
     const existing = readFileSync(reportPath, "utf8");
     for (const suite of suites) {
-      if (!existing.includes(`## ${suite.name}`) || !existing.includes(`- Cold:`) || !existing.includes(`- Warm:`)) {
-        throw new Error(`BENCHMARK.md is missing ${suite.name} cold/warm evidence`);
+      if (!existing.includes(`## ${suite.name}`)) {
+        throw new Error(`BENCHMARK.md is missing ${suite.name}`);
       }
+    }
+    const measurements = [...existing.matchAll(/^- (?:Cold|Warm): (.+)$/gm)].map((match) => match[1]);
+    if (measurements.length !== suites.length * 2 || measurements.some((line) => !/files=\d+; bytes=\d+; time_ms=\d+(?:\.\d+)?; memory_bytes=\d+; matches=\d+; truncation=[^;]+; status=(?:complete|partial)/.test(line))) {
+      throw new Error("BENCHMARK.md does not contain complete cold/warm files, bytes, time, memory, matches, truncation, and status metrics");
     }
     console.log(report);
   } else {
