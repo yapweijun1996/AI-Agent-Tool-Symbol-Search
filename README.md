@@ -64,7 +64,7 @@ console.log(result.data.matches);
 
 - Every request has an explicit canonicalized root; explicit paths and symlinks cannot escape it.
 - Directory symlinks, generated/vendor directories, ignored files, and secret-like files are excluded by default.
-- `--exclude` always wins; `--include` is an allow-list that can override `.gitignore` and ordinary generated-directory filters, but never secret, `.git`, symlink, or root boundaries.
+- `--exclude` always wins; `--include` is an allow-list that can override `.gitignore` and ordinary generated-directory filters, but never secret, `.git`, `node_modules`, symlink, or root boundaries.
 - Results use stable POSIX-relative paths, 1-based lines, 0-based UTF-16 columns, versioned SHA-256 symbol IDs, deterministic ranking, and explicit ambiguity/truncation diagnostics.
 - Default and maximum result limits are 50 and 500. Discovery limits are 10,000 files, 2 MiB per file, and 100 MiB parsed bytes. The 5-second budget is cooperative and returns partial evidence with `TIMEOUT` when reached.
 - Search reads project files as data. It does not import or execute project code, install dependencies, build, test, modify repositories, access the network, or call an LLM. `npm ci` is setup-time installation, not search behavior.

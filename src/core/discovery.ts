@@ -58,18 +58,48 @@ function anyPatternMatches(patterns: readonly string[] | undefined, relativePath
   return (patterns ?? []).some((pattern) => patternMatches(pattern, relativePath));
 }
 
+function globPrefixCanReachDirectory(
+  patternSegments: readonly string[],
+  directorySegments: readonly string[],
+  patternIndex = 0,
+  directoryIndex = 0,
+  memo = new Map<string, boolean>()
+): boolean {
+  const key = `${patternIndex}:${directoryIndex}`;
+  const cached = memo.get(key);
+  if (cached !== undefined) return cached;
+  let result: boolean;
+  if (directoryIndex >= directorySegments.length) {
+    result = true;
+  } else if (patternIndex >= patternSegments.length) {
+    result = false;
+  } else {
+    const patternSegment = patternSegments[patternIndex];
+    if (patternSegment === "**") {
+      result = globPrefixCanReachDirectory(patternSegments, directorySegments, patternIndex + 1, directoryIndex, memo)
+        || globPrefixCanReachDirectory(patternSegments, directorySegments, patternIndex, directoryIndex + 1, memo);
+    } else if (!minimatch(directorySegments[directoryIndex], patternSegment, { dot: true, nocase: false })) {
+      result = false;
+    } else {
+      result = globPrefixCanReachDirectory(patternSegments, directorySegments, patternIndex + 1, directoryIndex + 1, memo);
+    }
+  }
+  memo.set(key, result);
+  return result;
+}
+
 function includeMayReachDirectory(patterns: readonly string[] | undefined, relativePath: string): boolean {
   if (!patterns || patterns.length === 0) {
     return false;
   }
   const directory = relativePath.replaceAll("\\", "/").replace(/^\/+/, "");
+  const directorySegments = directory.split("/").filter(Boolean);
   return patterns.some((pattern) => {
     const normalized = normalizePattern(pattern);
     if (!normalized.includes("/")) {
       return true;
     }
-    const firstSegment = normalized.split("/")[0];
-    return firstSegment === "**" || firstSegment.includes("*") || firstSegment === directory;
+    return globPrefixCanReachDirectory(normalized.split("/").filter(Boolean), directorySegments);
   });
 }
 
@@ -99,7 +129,7 @@ function isGitignored(matcher: ReturnType<typeof ignore>, relativePath: string, 
 }
 
 function shouldSkipDirectory(relativePath: string, name: string, options: DiscoveryOptions, matcher: ReturnType<typeof ignore>): boolean {
-  if (name === ".git") {
+  if (name === ".git" || name === "node_modules") {
     return true;
   }
   if (anyPatternMatches(options.exclude, relativePath)) {

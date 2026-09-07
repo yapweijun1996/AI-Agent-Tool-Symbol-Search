@@ -239,7 +239,7 @@ Default discovery:
 - skips `.env`, `.env.*`, `*.pem`, `*.key`, `credentials.*`, and `secrets.*` by default;
 - treats project files as data and never imports or executes them.
 
-Precedence is deterministic: root/canonical containment and symlink/secret boundaries cannot be overridden; `--exclude` wins over ordinary matching; `--include` is an allow-list that can override `.gitignore` and ordinary generated-directory filters. Explicit file requests still undergo root, symlink, secret, extension, and project-file checks.
+Precedence is deterministic: root/canonical containment, symlink/secret boundaries, and `node_modules` exclusion cannot be overridden; `--exclude` wins over ordinary matching; `--include` is an allow-list that can override `.gitignore` and ordinary generated-directory filters. Explicit file requests still undergo root, symlink, secret, extension, and project-file checks.
 
 ## 13. Resource limits
 

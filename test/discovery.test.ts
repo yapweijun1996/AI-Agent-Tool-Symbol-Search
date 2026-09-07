@@ -104,14 +104,37 @@ test("gitignore, include, exclude, and secret precedence are deterministic", () 
   }
 });
 
+test("nested include globs reach matching generated paths without widening discovery", () => {
+  const root = temporaryDirectory();
+  try {
+    writeSource(root, "generated/deep/target.ts", "export const generatedTarget = 1;\n");
+    writeSource(root, "ordinary/deep/target.ts", "export const ordinaryTarget = 1;\n");
+    writeSource(root, "ignored/deep/target.ts", "export const ignoredTarget = 1;\n");
+    writeFileSync(join(root, ".gitignore"), "ignored/\n", "utf8");
+
+    const generated = searchSymbols({ root, symbol: "generatedTarget", include: ["generated/**/*.ts"] });
+    assert.equal(generated.status, "complete");
+    assert.equal(generated.data.matches[0]?.path, "generated/deep/target.ts");
+    assert.equal(searchSymbols({ root, symbol: "ordinaryTarget", include: ["generated/**/*.ts"] }).data.matches.length, 0);
+    assert.equal(searchSymbols({ root, symbol: "ignoredTarget" }).data.matches.length, 0);
+    const explicitlyIncluded = searchSymbols({ root, symbol: "ignoredTarget", include: ["ignored/**/*.ts"] });
+    assert.equal(explicitlyIncluded.data.matches[0]?.path, "ignored/deep/target.ts");
+  } finally {
+    removeDirectory(root);
+  }
+});
+
 test("external package files remain outside repository results", () => {
   const root = temporaryDirectory();
   try {
     writeSource(root, "src/main.ts", "import { externalOnly } from 'external-package'; export const local = externalOnly;\n");
-    writeSource(root, "node_modules/external-package/index.ts", "export const externalOnly = 1;\n");
+    writeSource(root, "node_modules/external-package/index.ts", "export const externalOnly = 1; export const packageOnly = 2;\n");
     const result = searchSymbols({ root, symbol: "externalOnly" });
     assert.ok(result.data.matches.length >= 1);
     assert.ok(result.data.matches.every((match) => !match.path.startsWith("node_modules/")));
+    const includedPackage = searchSymbols({ root, symbol: "packageOnly", include: ["node_modules/**/*.ts"] });
+    assert.equal(includedPackage.data.matches.length, 0);
+    assert.ok(includedPackage.data.matches.every((match) => !match.path.startsWith("node_modules/")));
   } finally {
     removeDirectory(root);
   }

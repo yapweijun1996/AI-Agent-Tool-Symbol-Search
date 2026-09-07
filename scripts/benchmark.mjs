@@ -7,6 +7,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { SymbolSearchEngine } = require(resolve("dist/index.js"));
+const packageVersion = JSON.parse(readFileSync(resolve("package.json"), "utf8")).version;
 const reportPath = resolve("BENCHMARK.md");
 const suites = [
   { name: "small", files: 5, symbolsPerFile: 10 },
@@ -49,6 +50,20 @@ function formatMeasurement(measurement) {
   return `files=${measurement.files}; bytes=${measurement.bytes}; time_ms=${measurement.timeMs}; memory_bytes=${measurement.memoryBytes}; matches=${measurement.matches}; truncation=${measurement.truncation}; status=${measurement.status}`;
 }
 
+function parseMeasurement(line) {
+  const fields = Object.fromEntries(line.split("; ").map((field) => field.split("=")));
+  const numeric = (name) => Number(fields[name]);
+  return {
+    files: numeric("files"),
+    bytes: numeric("bytes"),
+    timeMs: numeric("time_ms"),
+    memoryBytes: numeric("memory_bytes"),
+    matches: numeric("matches"),
+    truncation: fields.truncation,
+    status: fields.status
+  };
+}
+
 const temporary = mkdtempSync(join(tmpdir(), "agent-symbol-search-benchmark-"));
 try {
   const results = [];
@@ -70,6 +85,7 @@ try {
     "",
     "This report records reproducible local measurements from generated TypeScript fixtures. It is evidence, not a latency or memory guarantee. Each warm run is a second in-memory operation in the same process; V1 has no persistent disk cache.",
     "",
+    `- Package version: ${packageVersion}`,
     `- Node.js: ${process.version}`,
     "- Resolver: TypeScript compiler API",
     "- Fixture generation: deterministic file and symbol counts in `scripts/benchmark.mjs`",
@@ -87,9 +103,28 @@ try {
         throw new Error(`BENCHMARK.md is missing ${suite.name}`);
       }
     }
-    const measurements = [...existing.matchAll(/^- (?:Cold|Warm): (.+)$/gm)].map((match) => match[1]);
-    if (measurements.length !== suites.length * 2 || measurements.some((line) => !/files=\d+; bytes=\d+; time_ms=\d+(?:\.\d+)?; memory_bytes=\d+; matches=\d+; truncation=[^;]+; status=(?:complete|partial)/.test(line))) {
-      throw new Error("BENCHMARK.md does not contain complete cold/warm files, bytes, time, memory, matches, truncation, and status metrics");
+    for (const { suite, cold, warm } of results) {
+      const start = existing.indexOf(`## ${suite.name}`);
+      const end = existing.indexOf("\n## ", start + 1);
+      const section = existing.slice(start, end < 0 ? existing.length : end);
+      const fixture = section.match(/^- Fixture: (\d+) files × (\d+) symbols$/m);
+      if (!fixture || Number(fixture[1]) !== suite.files || Number(fixture[2]) !== suite.symbolsPerFile) {
+        throw new Error(`BENCHMARK.md fixture definition for ${suite.name} does not match scripts/benchmark.mjs`);
+      }
+      const storedCold = section.match(/^- Cold: (.+)$/m)?.[1];
+      const storedWarm = section.match(/^- Warm: (.+)$/m)?.[1];
+      if (!storedCold || !storedWarm) {
+        throw new Error(`BENCHMARK.md is missing cold/warm evidence for ${suite.name}`);
+      }
+      for (const [phase, storedLine, measured] of [["cold", storedCold, cold], ["warm", storedWarm, warm]]) {
+        const stored = parseMeasurement(storedLine);
+        for (const key of ["files", "bytes", "matches", "truncation", "status"]) {
+          if (stored[key] !== measured[key]) throw new Error(`BENCHMARK.md ${suite.name} ${phase} ${key} does not match a fresh measurement`);
+        }
+        for (const key of ["timeMs", "memoryBytes"]) {
+          if (!Number.isFinite(stored[key]) || stored[key] < 0) throw new Error(`BENCHMARK.md ${suite.name} ${phase} ${key} is not a valid non-negative measurement`);
+        }
+      }
     }
     console.log(report);
   } else {

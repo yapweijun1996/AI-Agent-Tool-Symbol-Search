@@ -38,7 +38,7 @@
     "smoke:pack": "node scripts/smoke-pack.mjs",
     "capability:check": "npm run build && node scripts/capability-check.mjs",
     "benchmark:check": "npm run build && node scripts/benchmark.mjs --check",
-    "docs:check": "node scripts/docs-check.mjs"
+    "docs:check": "npm run build && node scripts/docs-check.mjs"
   },
   "dependencies": {
     "ajv": "8.17.1",

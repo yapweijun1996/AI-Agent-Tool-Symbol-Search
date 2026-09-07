@@ -106,7 +106,7 @@ Compiler-resolved external package files may participate in type resolution, but
 
 The root and every explicit path are canonicalized with `realpath`, then checked with a path-relative containment test. Explicit symlinks targeting outside the root fail. Directory and file symlinks are not followed during default traversal. Secret-like basenames (`.env`, `.env.*`, `*.pem`, `*.key`, `credentials.*`, and `secrets.*`) are always excluded, including when a pattern tries to include them.
 
-Traversal is sorted by path using locale-independent comparisons. `.gitignore` is honored. `--exclude` wins over all ordinary matching; `--include` acts as an allow-list and can override `.gitignore` and ordinary generated-directory filters. `.git`, symlink, secret, and root boundaries cannot be overridden. Default generated/vendor directories include `.git`, `node_modules`, `dist`, `build`, `coverage`, `.cache`, `vendor`, and `generated`.
+Traversal is sorted by path using locale-independent comparisons. `.gitignore` is honored. `--exclude` wins over all ordinary matching; `--include` acts as an allow-list and can override `.gitignore` and ordinary generated-directory filters. `.git`, `node_modules`, symlink, secret, and root boundaries cannot be overridden. Default generated/vendor directories include `.git`, `node_modules`, `dist`, `build`, `coverage`, `.cache`, `vendor`, and `generated`.
 
 The resource defaults are:
 
