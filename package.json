@@ -1,0 +1,52 @@
+{
+  "name": "agent-symbol-search",
+  "version": "0.1.0",
+  "description": "Deterministic, local-first, read-only symbol navigation for AI coding agents.",
+  "license": "MIT",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "agent-symbol-search": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "README.md",
+    "DESIGN.md",
+    "SPEC.md",
+    "CHANGELOG.md",
+    "BENCHMARK.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "node scripts/lint.mjs",
+    "test": "npm run build && tsc -p tsconfig.test.json && node --test \"dist-test/test/**/*.test.js\"",
+    "verify": "npm run lint && npm run typecheck && npm run test",
+    "smoke:pack": "node scripts/smoke-pack.mjs",
+    "capability:check": "npm run build && node scripts/capability-check.mjs",
+    "benchmark:check": "npm run build && node scripts/benchmark.mjs --check",
+    "docs:check": "node scripts/docs-check.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.17.1",
+    "ignore": "7.0.5",
+    "minimatch": "10.0.1",
+    "typescript": "5.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.10"
+  }
+}
