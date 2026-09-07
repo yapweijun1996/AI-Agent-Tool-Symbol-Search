@@ -4,11 +4,11 @@
 |---|---|
 | Status | Active |
 | Owner | Project maintainers |
-| Last reviewed | 2026-09-07 |
+| Last reviewed | 2026-09-08 |
 
-All entries are user-visible changes. Package `0.1.0` is currently unreleased; no deployment or remote push is implied.
+All entries are user-visible changes. Package `0.1.0` is a release candidate pending interactive npm publication; no deployment, tag, or GitHub Release is implied.
 
-## Unreleased — 0.1.0
+## 0.1.0 — release candidate (publication pending)
 
 ### Runtime
 
@@ -17,14 +17,18 @@ All entries are user-visible changes. Package `0.1.0` is currently unreleased; n
 - Added versioned JSON schemas and runtime validation for requests, results, capabilities, ranges, IDs, diagnostics, truncation, and limits.
 - Added deterministic TypeScript project selection, fixed no-config fallback behavior, path-alias support, ambiguity diagnostics, normalized kinds including stable explicit/implicit constructors, effective export-specifier/re-export state, exported variable/binding state, variable-bound class-expression relationships, POSIX paths, UTF-16 ranges, and SHA-256 symbol identities.
 - Added bounded read-only discovery with root/symlink containment, `.gitignore`, nested include-glob reachability, non-overridable `node_modules` exclusion, include/exclude precedence, secret exclusions, file/byte/result budgets, adversarial glob timeout coverage, and cooperative timeout diagnostics.
+- Added optional `search.project` selection with deterministic multiple-config recovery, repository-boundary validation, regular-file tsconfig enforcement, and project-scoped search file sets.
+- Added injectable CLI stdout/stderr streams for in-process JSON, diagnostics, and exit-code coverage.
 
 ### Verification
 
 - Added TypeScript golden fixtures, shorthand-reference and constructor coverage, Base → abstract Mid → concrete Child relationship coverage, ambient `.d.ts` and namespace/module false-positive coverage, effective-export and outside-root diagnostic regressions, false-positive, project-selection, security, limit, read-only, CLI/library parity, and installed-artifact smoke tests.
 - Added `BENCHMARK.md` with reproducible cold/warm small, medium, and large fixture measurements without a latency guarantee.
 - Added documentation, schema, capability, packaging, benchmark-evidence, and verification scripts; docs and benchmark checks compare claims with runtime output and fresh deterministic fixture measurements. Direct Ajv and minimatch dependencies are pinned to audited non-vulnerable releases.
+- Added serial native Node coverage for product sources with lines ≥85%, functions ≥80%, and branches ≥75%; ordinary tests use a 30-second `EngineOptions` budget while the product default remains 5 seconds.
+- Added least-privilege GitHub Actions coverage for Node 22/24/26 on Ubuntu, Node 24 package smoke on Ubuntu/macOS/Windows, and an Ubuntu/Node 24 benchmark gate. Updated package metadata, public npm configuration, `prepack`, `release:check`, `prepublishOnly`, and `RELEASE.md`.
 
 ### Documentation
 
 - Reconciled README, DESIGN, SPEC, EPIC, ROADMAP, TASK, and documentation-governance status with the verified working-tree implementation.
-- Recorded that JavaScript, Python, CFML, structural typing, dynamic dispatch, persistent cache, MCP, code slicing, impact analysis, test selection, release, deployment, and push remain outside this V1 scope.
+- Recorded supported Node majors 22, 24, and 26, the v0.1.0 no-public-latency-SLO decision, interactive local publication without provenance, and next-release trusted publishing/provenance follow-up. JavaScript, Python, CFML, structural typing, dynamic dispatch, persistent cache, MCP, code slicing, impact analysis, and test selection remain outside this V1 scope.

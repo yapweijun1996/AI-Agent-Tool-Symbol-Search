@@ -4,8 +4,8 @@
 |---|---|
 | Status | Active |
 | Owner | Project maintainers |
-| Last reviewed | 2026-09-07 |
-| Runtime status | V1 TypeScript operations are implemented and verified in the current working tree; package 0.1.0 is unreleased |
+| Last reviewed | 2026-09-08 |
+| Runtime status | V1 TypeScript operations and v0.1.0 release gates are implemented and verified in the current working tree; npm publication is pending |
 | Compatibility | Schema version 1; TypeScript-only V1 contract |
 
 This is the normative V1 contract. The maintained JSON schemas under `schemas/`, runtime validation, and contract tests are the executable form of its machine-readable portions.
@@ -36,13 +36,24 @@ Every request requires an explicit `root`. The root is resolved and canonicalize
 | Operation | Required | Optional |
 |---|---|---|
 | `capabilities` | `root` | none |
-| `search` | `root`, `symbol` | `match` (`exact`/`prefix`/`substring`), `limit`, `include`, `exclude` |
+| `search` | `root`, `symbol` | `match` (`exact`/`prefix`/`substring`), `project`, `limit`, `include`, `exclude` |
 | `definition` | `root`, `symbol` | `from`, `project`, `limit`, `include`, `exclude` |
 | `references` | `root`, `symbol` | `from`, `project`, `limit`, `include`, `exclude` |
 | `implementations` | `root`, `symbol` | `from`, `project`, `limit`, `include`, `exclude` |
 | `symbols` | `root`, `path` | `project`, `limit`, `include`, `exclude` |
 
-The JSON library request is canonical. A source position uses separate fields so Windows drive letters are not ambiguous:
+The JSON library request is canonical. The search request has this public TypeScript shape; `project` is optional and schema version remains `"1"`:
+
+```ts
+export interface SearchRequest extends RequestOptions {
+  operation: "search";
+  symbol: string;
+  match?: MatchMode;
+  project?: string;
+}
+```
+
+A source position uses separate fields so Windows drive letters are not ambiguous:
 
 ```json
 {
@@ -54,14 +65,15 @@ The JSON library request is canonical. A source position uses separate fields so
 
 `line` is 1-based. `column` is 0-based UTF-16. `from.path` and `symbols.path` must resolve to an existing in-root file; an explicit symlink is allowed only when its canonical target remains inside `root` and is not secret-like.
 
-The CLI syntax exposes `--from-path`, `--line`, and `--column` separately. It accepts `--include` and `--exclude` repeatedly. Colon-delimited positions such as `path:line` are not canonical.
+The CLI syntax exposes `--from-path`, `--line`, and `--column` separately, and exposes project selection as `--project <tsconfig*.json>` for every TypeScript operation that accepts `project`. It accepts `--include` and `--exclude` repeatedly. Colon-delimited positions such as `path:line` are not canonical.
 
 ### TypeScript project selection
 
-For TypeScript operations, `project` must name an existing repository-relative `tsconfig*.json`. If it is omitted, the implementation discovers configs under the root after normal ignore/security filtering:
+For TypeScript operations, `project` must name an existing repository-relative regular (non-symlink) `tsconfig*.json` file. If it is omitted, the implementation discovers configs under the root after normal ignore/security filtering:
 
 - exactly one config is selected;
 - multiple configs return `status: "error"`, `INVALID_REQUEST`, all candidate paths, and an instruction to pass `project`;
+- an explicit non-tsconfig, missing, symlink, or root-outside project returns a bounded error;
 - no config uses fixed fallback options: ES2022 target, CommonJS/Node resolution, strict checking, no emit, `allowJs: false`, `checkJs: false`, and preserved JSX.
 
 A selected config's `include`/`files` set controls the Program, but only discovered in-root TypeScript files are admitted. `baseUrl`, `paths`, and module resolution are honored. Project references are reported but not recursively built in V1. JavaScript files are excluded even if a config enables them. Compiler version and selected project (`tsconfig*.json` or `fallback`) are included in `stats`.
@@ -286,15 +298,15 @@ During a search, the package does not write source, cache, lock, or result files
 
 The public schema is versioned through `schemaVersion`. Breaking field, enum, range, identity, or ordering changes require a new schema version or an explicitly documented migration. The package version, compiler version, adapter, and effective project configuration are reported when they affect resolution.
 
-The current package is unreleased. Reproducible verification is provided by:
+The current package is a `0.1.0` release candidate; npm publication, tag, and GitHub Release remain pending the interactive checklist in `RELEASE.md`. Reproducible verification is provided by:
 
 ```bash
 npm ci
-npm run verify
-npm run smoke:pack
-npm run capability:check
-npm run benchmark:check
-npm run docs:check
+npm run release:check
+npm audit --audit-level=high
+npm pack --dry-run --json
+git diff --check
+git status --short
 ```
 
-The package artifact smoke test runs outside the source checkout. `BENCHMARK.md` records cold and warm in-memory measurements for small, medium, and large generated fixtures without setting an unmeasured performance threshold.
+The package artifact smoke test runs outside the source checkout. Native coverage measures product sources only and enforces lines ≥85%, functions ≥80%, and branches ≥75%. `BENCHMARK.md` records cold and warm in-memory measurements for small, medium, and large generated fixtures; release checks require no fixture `TIMEOUT`, without setting a public latency SLO. CI verifies Node 22, 24, and 26 on Ubuntu plus Node 24 package smoke on Ubuntu, macOS, and Windows.

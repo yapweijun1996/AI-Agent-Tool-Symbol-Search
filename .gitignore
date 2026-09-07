@@ -37,6 +37,8 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Local environment and secrets
+/.npmrc
+*.tgz
 .env
 .env.*
 !.env.example

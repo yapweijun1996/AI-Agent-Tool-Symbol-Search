@@ -4,14 +4,15 @@
 |---|---|
 | Status | Active |
 | Owner | Project maintainers |
-| Last reviewed | 2026-09-07 |
+| Last reviewed | 2026-09-08 |
 | Source of truth | Current repository plus executable evidence |
-| Working-tree scope | V1 TypeScript implementation, verification artifacts, and synchronized documentation; package 0.1.0 is unreleased |
+| Working-tree scope | V1 TypeScript implementation, coverage/CI/release gates, verification artifacts, and synchronized documentation; npm publication of 0.1.0 is pending |
 
 ## Current repository truth
 
 - `HEAD` is the current V1 implementation line; the historical documentation-only baseline is an ancestor in Git history, not the current repository state. The exact checked-out commit is recorded by `git log --oneline --decorate -5` in the verification evidence.
-- The package has no published release and no remote branch has been pushed by this work.
+- The package has no published release; npm login, publish, tag, and GitHub Release remain user-authenticated steps in `RELEASE.md`.
+- Supported release Node majors are 22, 24, and 26. Node 20 and the local EOL Node 23 runtime are not release evidence.
 - JavaScript, Python, and CFML are proposed future adapters, not current capabilities.
 - No task is considered complete from documentation alone; each completed task below has executable evidence.
 
@@ -31,11 +32,21 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 
 **Status:** Complete.
 
-**Deliverable:** `package.json`, `package-lock.json`, Node.js `>=20.0.0` policy, pinned TypeScript/Ajv/discovery dependencies, compiler configuration, test runner, build output, and CLI/library entrypoints.
+**Deliverable:** `package.json`, `package-lock.json`, Node.js 22/24/26 policy, pinned TypeScript/Ajv/discovery dependencies, repository/homepage/bugs/keyword metadata, public npm configuration, compiler configuration, test runner, build output, and CLI/library entrypoints.
 
 **Acceptance evidence:** `npm ci --ignore-scripts --no-audit --no-fund`, `npm run typecheck`, `npm run build`, and `npm run smoke:pack` pass.
 
 **Affected contract:** `SPEC.md` Sections 1–3, 15–16; runtime behavior is recorded in `CHANGELOG.md`.
+
+### RELEASE-001 — Prepare public npm publication
+
+**Status:** Complete locally; external publication pending.
+
+**Deliverable:** `RELEASE.md`, `prepack`, `release:check`, `prepublishOnly`, package metadata, release recovery rules, and explicit no-provenance/trusted-publishing follow-up.
+
+**Acceptance evidence:** `npm run release:check`, `npm pack --dry-run --json`, `git diff --check`, and the CI workflow definition pass or remain ready for the maintainer's clean green release commit.
+
+**Affected contract:** `README.md`, `SPEC.md` Section 16, `ROADMAP.md` Phase 6, and `CHANGELOG.md`.
 
 ### CONTRACT-001 — Implement versioned schemas
 
@@ -115,22 +126,37 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 
 **Acceptance evidence:** `BENCHMARK.md` is checked by `npm run benchmark:check`. It records evidence without claiming an unmeasured latency threshold.
 
+### COVERAGE-001 — Establish stable native coverage gates
+
+**Status:** Complete.
+
+**Deliverable:** A serial native Node coverage script that rebuilds product/test artifacts, excludes tests/fixtures/scripts from the denominator, enforces lines ≥85%, functions ≥80%, and branches ≥75%, and uses a 30-second test `EngineOptions` budget while retaining explicit timeout tests.
+
+**Acceptance evidence:** `npm run coverage` passes and reports only `dist-test/src` product output; the five-second production default is contract-tested.
+
+### CI-001 — Verify supported runtimes and platforms
+
+**Status:** Complete locally; hosted execution pending.
+
+**Deliverable:** `.github/workflows/ci.yml` with least-privilege read-only contents permission, Ubuntu Node 22/24/26 quality, Node 24 package smoke on Ubuntu/macOS/Windows, and Ubuntu/Node 24 benchmark verification.
+
+**Acceptance evidence:** Workflow commands are reproducible locally through `npm run release:check`; hosted PR/main execution is required before publication.
+
 ## Verification status
 
-The full V1 verification commands are:
+The full V1 and release verification commands are:
 
 ```bash
 npm ci
-npm run verify
-npm run smoke:pack
-npm run capability:check
-npm run benchmark:check
-npm run docs:check
+npm run release:check
+npm audit --audit-level=high
+npm pack --dry-run --json
 git diff --check
+git status --short
 ```
 
-`npm run verify` runs static safety checks, typecheck, build, and the Node test suite. Packaging, capability, benchmark, and documentation checks are separate reproducible gates. No network, deployment, release, or push is performed by these project commands except dependency installation needed for setup and the package smoke test.
+`release:check` runs static safety checks, typecheck, build, tests, native coverage, packaged smoke, capability, benchmark, and documentation checks. `schema:check` is also run by CI. No network, deployment, npm publication, tag, or push is performed by these project commands except dependency installation needed for setup and the package smoke test.
 
 ## Blockers and next step
 
-No actionable V1 TypeScript task remains blocked. Future language adapters, ecosystem integration, performance optimization, and release readiness remain explicitly proposed or in progress in `ROADMAP.md` and require separate scope approval.
+No actionable repository implementation task remains blocked. The remaining release actions are maintainer-controlled: wait for green hosted CI, run interactive `npm login`/`npm whoami`, publish only after the registry preflight, verify a fresh install, then create the annotated tag and GitHub Release. Do not retry an uncertain npm publish without querying the registry. Future language adapters and ecosystem integration remain proposed in `ROADMAP.md`.

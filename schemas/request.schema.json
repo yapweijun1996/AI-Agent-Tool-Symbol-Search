@@ -104,6 +104,9 @@
         "match": {
           "enum": ["exact", "prefix", "substring"]
         },
+        "project": {
+          "$ref": "#/$defs/project"
+        },
         "limit": {
           "$ref": "#/$defs/limit"
         },

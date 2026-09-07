@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findDefinition, findImplementations, findReferences, listSymbols, searchSymbols } from "../src";
-import { fixtureRoot } from "./helpers";
+import { findDefinition, findImplementations, findReferences, fixtureRoot, listSymbols, searchSymbols } from "./helpers";
 
 function matchNames(result: ReturnType<typeof searchSymbols>): string[] {
   return result.data.matches.map((match) => match.name);

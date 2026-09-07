@@ -138,6 +138,9 @@ export function buildProject(inputRoot: string, options: ProjectBuildOptions): P
     if ("diagnostic" in projectResult) {
       return createEmptyContext(root, [], [projectResult.diagnostic], truncation, baseStats, true);
     }
+    if (projectResult.value.isSymlink) {
+      return createEmptyContext(root, [], [diagnostic("INVALID_REQUEST", "project must identify a regular in-root tsconfig*.json file; symbolic links are not allowed", "error", options.project)], truncation, baseStats, true);
+    }
     const projectName = projectResult.value.relative.split("/").at(-1)?.toLowerCase() ?? "";
     if (!projectName.startsWith("tsconfig") || !projectName.endsWith(".json")) {
       return createEmptyContext(root, [], [diagnostic("INVALID_REQUEST", "project must identify a tsconfig*.json file", "error", options.project)], truncation, baseStats, true);

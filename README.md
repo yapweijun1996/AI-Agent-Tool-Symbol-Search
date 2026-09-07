@@ -4,8 +4,8 @@
 |---|---|
 | Status | Active |
 | Owner | Project maintainers |
-| Last reviewed | 2026-09-07 |
-| Package version | 0.1.0 (unreleased) |
+| Last reviewed | 2026-09-08 |
+| Package version | 0.1.0 (release candidate; npm publication pending) |
 
 > Deterministic, local-first, read-only symbol navigation for AI coding agents.
 
@@ -37,13 +37,19 @@ JavaScript, Python, and CFML are proposed future adapters, not shipped capabilit
 
 ## Quick start
 
-Requirements: Node.js 20 or newer and npm.
+Requirements: Node.js 22, Node.js 24, or Node.js 26 and npm. Node 20 and Node 23 are not supported release runtimes.
 
 ```bash
 npm ci
 npm run build
 node dist/cli.js capabilities --root .
 node dist/cli.js definition --root ./path/to/repository --symbol resolveConfig
+```
+
+When a repository contains more than one `tsconfig*.json`, pass the project explicitly rather than guessing:
+
+```bash
+node dist/cli.js search --root . --project tsconfig.json --symbol SymbolSearchEngine
 ```
 
 The CLI writes one JSON result to stdout. Human-readable diagnostics go to stderr, so stdout can be piped to a JSON parser safely. A complete or partial result exits `0`; invalid requests, invalid roots, and path/security failures exit non-zero.
@@ -77,13 +83,15 @@ Run the complete local verification contract:
 
 ```bash
 npm run verify
+npm run coverage
+npm run schema:check
 npm run smoke:pack
 npm run capability:check
 npm run benchmark:check
 npm run docs:check
 ```
 
-`smoke:pack` installs the npm tarball in a temporary directory outside the source checkout and exercises both the CLI and library API. `BENCHMARK.md` records cold and warm in-memory measurements for deterministic small, medium, and large generated fixtures; it is a baseline, not a performance guarantee.
+`coverage` rebuilds the test artifacts and runs serial Node native coverage over product sources only, enforcing lines ≥85%, functions ≥80%, and branches ≥75%. `smoke:pack` installs the npm tarball in a temporary directory outside the source checkout and exercises both the CLI and library API. `BENCHMARK.md` records cold and warm in-memory measurements for deterministic small, medium, and large generated fixtures; every release fixture must avoid `TIMEOUT`, but v0.1.0 makes no public latency SLO. `RELEASE.md` is the publication checklist.
 
 ## Documentation
 
@@ -92,6 +100,7 @@ npm run docs:check
 - [`EPIC.md`](./EPIC.md) — TypeScript vertical-slice outcome
 - [`ROADMAP.md`](./ROADMAP.md) — completed and future work
 - [`TASK.md`](./TASK.md) — evidence-backed task status
-- [`CHANGELOG.md`](./CHANGELOG.md) — unreleased and historical changes
-- [`BENCHMARK.md`](./BENCHMARK.md) — reproducible performance baseline
+- [`CHANGELOG.md`](./CHANGELOG.md) — release-candidate and historical changes
+- [`BENCHMARK.md`](./BENCHMARK.md) — reproducible performance baseline and release gate
+- [`RELEASE.md`](./RELEASE.md) — v0.1.0 release, publication, and recovery checklist
 - [`DOCUMENTATION_STANDARD.md`](./DOCUMENTATION_STANDARD.md) — documentation governance

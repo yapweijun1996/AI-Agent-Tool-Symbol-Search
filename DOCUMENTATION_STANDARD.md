@@ -5,7 +5,7 @@
 | Status | Active |
 | Applies to | `agent-symbol-search` and its repository documentation |
 | Owner | Project maintainers |
-| Last reviewed | 2026-09-07 |
+| Last reviewed | 2026-09-08 |
 | Review cadence | Every release and whenever a public contract changes |
 
 ## 1. Purpose
@@ -40,7 +40,8 @@ Each document has one primary responsibility. Do not duplicate authoritative req
 | `ROADMAP.md` | Planned work, sequencing, and explicitly labelled non-commitments | Future intent only |
 | `TASK.md` | Active implementation tasks and acceptance checks | Current delivery plan |
 | `CHANGELOG.md` | Released user-visible changes and migration notes | Historical release record |
-| `BENCHMARK.md` | Reproducible measured performance baseline and limitations | Benchmark evidence, not a product guarantee |
+| `BENCHMARK.md` | Reproducible measured performance baseline, timeout gate, and limitations | Benchmark evidence, not a product guarantee |
+| `RELEASE.md` | v0.1.0 repository, npm, registry, tag, and GitHub Release checklist | Publication procedure and recovery rules |
 
 If two documents disagree, `SPEC.md` governs runtime behavior, executable schemas/tests govern exact machine-readable behavior, and `ROADMAP.md` never overrides either.
 
@@ -234,7 +235,10 @@ Before release, maintainers MUST verify:
 - capability output against the documented matrix;
 - golden fixtures for supported language behavior;
 - bounded-result and read-only invariants;
-- platform-specific path examples where supported.
+- platform-specific path examples where supported;
+- Node 22/24/26 CI, Node 24 package smoke on Ubuntu/macOS/Windows, and the Ubuntu/Node 24 benchmark gate;
+- product-source coverage thresholds and the explicit absence of benchmark `TIMEOUT` results;
+- npm registry and fresh-install verification before creating the annotated tag or GitHub Release.
 
 ## 12. Documentation quality checklist
 
@@ -251,7 +255,7 @@ The change is ready when:
 
 ## 13. Current implementation baseline
 
-The V1 TypeScript vertical slice is implemented and verified in the current working tree, but package `0.1.0` is unreleased. The following documents now describe the verified implementation and its boundaries:
+The V1 TypeScript vertical slice and v0.1.0 repository release gates are implemented and verified in the current working tree, but npm publication is pending. Supported release Node majors are 22, 24, and 26; the first local publication does not claim provenance or a public latency SLO. The following documents now describe the verified implementation and its boundaries:
 
 - `README.md`: product overview, quick start, support matrix, and verification commands;
 - `DESIGN.md`: implemented architecture, ownership boundaries, and trade-offs;
@@ -259,7 +263,8 @@ The V1 TypeScript vertical slice is implemented and verified in the current work
 - `EPIC.md`: completed TypeScript vertical-slice outcome and non-goals;
 - `ROADMAP.md`: completed V1 phases and proposed future phases;
 - `TASK.md`: evidence-backed delivery status;
-- `CHANGELOG.md`: unreleased runtime behavior and documentation history;
-- `BENCHMARK.md`: measured baseline and explicit performance limitations.
+- `CHANGELOG.md`: release-candidate runtime behavior and documentation history;
+- `BENCHMARK.md`: measured baseline, no-timeout release gate, and explicit performance limitations;
+- `RELEASE.md`: maintainer-controlled publication, verification, and recovery checklist.
 
-Documentation for JavaScript, Python, and CFML MUST preserve the distinction between proposed/structured/heuristic support and confirmed semantic resolution. A future public release MUST repeat the clean-checkout, package, capability, schema, fixture, bounded-result, read-only, and platform-specific review gates.
+Documentation for JavaScript, Python, and CFML MUST preserve the distinction between proposed/structured/heuristic support and confirmed semantic resolution. A future public release MUST repeat the clean-checkout, package, capability, schema, fixture, bounded-result, read-only, coverage, CI, registry, and platform-specific review gates. The next release SHOULD use npm trusted publishing and provenance rather than repeating the v0.1.0 local interactive process.

@@ -4,7 +4,7 @@
 |---|---|
 | Status | Active |
 | Owner | Project maintainers |
-| Last reviewed | 2026-09-07 |
+| Last reviewed | 2026-09-08 |
 | Planning horizon | Sequenced by evidence, not dates |
 
 This roadmap describes sequencing and future intent. Runtime capability claims come from the package, schemas, tests, and capability output, not from this document.
@@ -13,7 +13,7 @@ This roadmap describes sequencing and future intent. Runtime capability claims c
 
 **Status: Completed for V1 TypeScript — package implemented and verified in the current working tree.**
 
-The repository now contains a Node.js/TypeScript package, schemas, CLI/library API, fixtures, contract/security tests, and a benchmark baseline. Package `0.1.0` is not published. The original documentation-only baseline remains visible in Git history; it is not current runtime state.
+The repository now contains a Node.js/TypeScript package, schemas, CLI/library API, fixtures, contract/security tests, native coverage gates, CI configuration, release metadata, and a benchmark baseline. Package `0.1.0` is a release candidate and is not yet published. The original documentation-only baseline remains visible in Git history; it is not current runtime state.
 
 ## Phase 0 — Contract foundation
 
@@ -125,19 +125,26 @@ An integration workflow test: symbol search → code slice, with no mega-tool be
 
 ## Phase 6 — Performance and release readiness
 
-**Status: In progress**
+**Status: Completed locally; external publication pending**
 
 ### Outcome
 
-Measure bounded scaling and decide whether optimization or a release is justified.
+Measure bounded scaling, establish stable release gates, and prepare a public package without claiming an unmeasured performance SLO.
 
-### Delivered so far
+### Delivered
 
-`BENCHMARK.md` records cold and warm in-memory files, bytes, time, memory, matches, and truncation for generated small, medium, and large fixtures. No latency acceptance threshold is set.
+- `BENCHMARK.md` records cold and warm in-memory files, bytes, time, memory, matches, and truncation for generated small, medium, and large fixtures; every fixture is rejected if it reaches `TIMEOUT`.
+- Native Node coverage measures product sources only with lines ≥85%, functions ≥80%, and branches ≥75%; normal tests use a 30-second `EngineOptions` budget while production remains 5 seconds.
+- GitHub Actions runs Ubuntu Node 22/24/26 quality, Node 24 package smoke on Ubuntu/macOS/Windows, and the Ubuntu/Node 24 benchmark check with `contents: read`.
+- Package metadata, `prepack`, `release:check`, `prepublishOnly`, and `RELEASE.md` prepare `agent-symbol-search@0.1.0` for a public unscoped npm release.
 
 ### Remaining evidence
 
-A maintainer-approved release checklist, supported-platform package smoke results, and any optimization decision based on the recorded baseline. Release, publish, deploy, and push remain outside the current goal.
+Run the green CI workflow and the interactive npm/registry, annotated-tag, and GitHub Release steps in `RELEASE.md`. The first local publish does not claim provenance; trusted publishing/provenance is a next-release follow-up.
+
+## Next release follow-up
+
+Adopt npm trusted publishing and provenance in the next release after the local interactive v0.1.0 process is complete.
 
 ## Non-commitments
 

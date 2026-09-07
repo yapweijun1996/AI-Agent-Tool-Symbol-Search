@@ -82,6 +82,7 @@ export interface SearchRequest extends RequestOptions {
   operation: "search";
   symbol: string;
   match?: MatchMode;
+  project?: string;
 }
 
 export interface SemanticRequest extends RequestOptions {
