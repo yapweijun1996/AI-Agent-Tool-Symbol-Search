@@ -129,6 +129,15 @@ test("explicit inheritance and implementation relationships are distinct", () =>
   assert.equal(methodResult.status, "complete");
   assert.deepEqual(methodResult.data.matches.map((match) => [match.name, match.relation]), [["run", "implementation"]]);
 
+  const abstractChain = findImplementations({ root: fixtureRoot, symbol: "execute" });
+  assert.equal(abstractChain.status, "complete");
+  assert.deepEqual(abstractChain.data.matches.map((match) => [match.qualifiedName, match.relation]), [["ChainChild.execute", "implementation"]]);
+  assert.ok(!abstractChain.data.matches.some((match) => match.qualifiedName === "ChainMid.execute"));
+
+  const incompatible = findImplementations({ root: fixtureRoot, symbol: "use" });
+  assert.equal(incompatible.status, "partial");
+  assert.equal(incompatible.data.matches.length, 0);
+
   const structuralResult = findImplementations({ root: fixtureRoot, symbol: "StructuralAdapter" });
   assert.equal(structuralResult.status, "partial");
   assert.ok(structuralResult.diagnostics.some((item) => item.code === "SEMANTIC_RESOLUTION_UNAVAILABLE"));

@@ -149,6 +149,29 @@ test("nested include globs reach matching generated paths without widening disco
   }
 });
 
+test("adversarial include globs stay fast and cannot bypass timeout", () => {
+  const root = temporaryDirectory();
+  try {
+    writeSource(root, "src/ordinary.ts", "export const ordinary = 1;\n");
+    const adversarial = `${"**/".repeat(42)}not-a-real-file.ts`;
+    assert.ok(adversarial.length > 140);
+
+    const fastStart = Date.now();
+    const fast = searchSymbols({ root, symbol: "ordinary", include: [adversarial] });
+    assert.ok(Date.now() - fastStart < 2_000);
+    assert.equal(fast.status, "complete");
+    assert.equal(fast.data.matches.length, 0);
+
+    const timeoutStart = Date.now();
+    const timed = createEngine({ limits: { timeoutMs: 0 } }).execute({ operation: "search", root, symbol: "ordinary", include: [adversarial] });
+    assert.ok(Date.now() - timeoutStart < 2_000);
+    assert.equal(timed.status, "partial");
+    assert.ok(timed.truncation.reasons.includes("TIMEOUT"));
+  } finally {
+    removeDirectory(root);
+  }
+});
+
 test("external package files remain outside repository results", () => {
   const root = temporaryDirectory();
   try {

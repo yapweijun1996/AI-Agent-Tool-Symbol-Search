@@ -410,15 +410,47 @@ function derivedFrom(
   return false;
 }
 
+function hasAbstractModifier(node: ts.Node): boolean {
+  return Boolean(ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Abstract);
+}
+
+function isConcreteImplementationMember(node: ts.Node): boolean {
+  if (hasAbstractModifier(node) || ts.isMethodSignature(node) || ts.isPropertySignature(node)) return false;
+  if (ts.isMethodDeclaration(node)) return Boolean(node.body);
+  if (ts.isGetAccessorDeclaration(node) || ts.isSetAccessorDeclaration(node)) return Boolean(node.body);
+  if (ts.isPropertyDeclaration(node)) {
+    return !Boolean(ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Ambient);
+  }
+  return false;
+}
+
+function isConcreteClass(node: ts.ClassDeclaration | ts.ClassExpression): boolean {
+  return !hasAbstractModifier(node);
+}
+
+function memberType(checker: ts.TypeChecker, record: DeclarationRecord): ts.Type | undefined {
+  try {
+    return checker.getTypeAtLocation(record.nameNode ?? record.node);
+  } catch {
+    return undefined;
+  }
+}
+
+function compatibleImplementationMember(checker: ts.TypeChecker, target: DeclarationRecord, member: DeclarationRecord): boolean {
+  const targetType = memberType(checker, target);
+  const memberValueType = memberType(checker, member);
+  return Boolean(targetType && memberValueType && checker.isTypeAssignableTo(memberValueType, targetType));
+}
+
 function abstractMethodMatches(context: ProjectContext, index: SymbolIndex, symbols: Set<ts.Symbol>): Match[] {
   if (!context.checker) return [];
   const abstractTargets = definitionRecords(index, symbols).filter((record) => {
     const node = record.node;
-    return (ts.isMethodDeclaration(node) || ts.isMethodSignature(node) || ts.isPropertyDeclaration(node) || ts.isPropertySignature(node) || ts.isGetAccessorDeclaration(node) || ts.isSetAccessorDeclaration(node)) && Boolean(ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Abstract);
+    return (ts.isMethodDeclaration(node) || ts.isMethodSignature(node) || ts.isPropertyDeclaration(node) || ts.isPropertySignature(node) || ts.isGetAccessorDeclaration(node) || ts.isSetAccessorDeclaration(node)) && hasAbstractModifier(node);
   });
   const matches: Match[] = [];
   if (abstractTargets.length === 0) return matches;
-  const classNodes = index.classLikeNodes.filter((node): node is ts.ClassDeclaration | ts.ClassExpression => isClassNode(node));
+  const classNodes = index.classLikeNodes.filter((node): node is ts.ClassDeclaration | ts.ClassExpression => isClassNode(node) && isConcreteClass(node));
   for (const target of abstractTargets) {
     const targetContainer = parentClassLike(index, target.node);
     if (!targetContainer?.canonicalSymbol) continue;
@@ -426,7 +458,7 @@ function abstractMethodMatches(context: ProjectContext, index: SymbolIndex, symb
       if (!derivedFrom(context, index, classNode, targetContainer.canonicalSymbol)) continue;
       const classMembers = index.records.filter((record) => record.sourceFile === classNode.getSourceFile() && parentClassLike(index, record.node)?.node === classNode && record.name === target.name && !record.isAlias);
       for (const member of classMembers) {
-        if (member.node !== target.node) {
+        if (member.node !== target.node && isConcreteImplementationMember(member.node) && compatibleImplementationMember(context.checker, target, member)) {
           matches.push(makeMatch(context, member, "implementation"));
         }
       }
