@@ -6,19 +6,20 @@ import { join, resolve } from "node:path";
 const repository = resolve(".");
 const fixtureRoot = resolve("test/fixtures/typescript");
 const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
+const useShell = process.platform === "win32";
 const cliExecutable = process.platform === "win32" ? "agent-symbol-search.cmd" : "agent-symbol-search";
 const temporary = mkdtempSync(join(tmpdir(), "agent-symbol-search-pack-"));
 try {
-  execFileSync(npmExecutable, ["run", "build"], { cwd: repository, stdio: "inherit" });
-  const packOutput = execFileSync(npmExecutable, ["pack", "--json", "--pack-destination", temporary], { cwd: repository, encoding: "utf8" });
+  execFileSync(npmExecutable, ["run", "build"], { cwd: repository, stdio: "inherit", shell: useShell });
+  const packOutput = execFileSync(npmExecutable, ["pack", "--json", "--pack-destination", temporary], { cwd: repository, encoding: "utf8", shell: useShell });
   const packageFile = JSON.parse(packOutput)[0]?.filename;
   if (!packageFile) throw new Error("npm pack did not report a package file");
   const archive = join(temporary, packageFile);
   const installRoot = join(temporary, "installed");
-  execFileSync(npmExecutable, ["install", "--prefix", installRoot, "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", archive], { cwd: repository, stdio: "inherit" });
+  execFileSync(npmExecutable, ["install", "--prefix", installRoot, "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", archive], { cwd: repository, stdio: "inherit", shell: useShell });
 
   const cli = join(installRoot, "node_modules", ".bin", cliExecutable);
-  const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--project", "tsconfig.json", "--symbol", "resolveConfig"], { encoding: "utf8" });
+  const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--project", "tsconfig.json", "--symbol", "resolveConfig"], { encoding: "utf8", shell: useShell });
   if (cliRun.status !== 0) throw new Error(`packaged CLI exited ${cliRun.status}: ${cliRun.stderr}`);
   const cliResult = JSON.parse(cliRun.stdout);
   if (cliResult.status !== "complete" || !cliResult.data.matches?.length) throw new Error("packaged CLI did not resolve the fixture definition");
