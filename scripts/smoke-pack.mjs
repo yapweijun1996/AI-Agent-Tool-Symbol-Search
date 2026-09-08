@@ -22,16 +22,7 @@ try {
   const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--project", "tsconfig.json", "--symbol", "resolveConfig"], { encoding: "utf8", shell: useShell });
   if (cliRun.status !== 0) throw new Error(`packaged CLI exited ${cliRun.status}: ${cliRun.stderr}`);
   const cliResult = JSON.parse(cliRun.stdout);
-  if (cliResult.status !== "complete" || !cliResult.data.matches?.length) {
-    const trace = spawnSync(process.execPath, ["-e", [
-      "const path = require('node:path');",
-      "const { CompilerFiles } = require(path.join(path.dirname(require.resolve('agent-symbol-search')), 'core/compiler-files.js'));",
-      "const original = CompilerFiles.prototype.report;",
-      "CompilerFiles.prototype.report = function (file, code, message) { console.error(JSON.stringify({ file, code, libraryRoot: this.libraryRoot })); return original.call(this, file, code, message); };",
-      `require('agent-symbol-search').findDefinition({ root: ${JSON.stringify(fixtureRoot)}, project: 'tsconfig.json', symbol: 'resolveConfig' });`
-    ].join("\n")], { cwd: installRoot, encoding: "utf8" });
-    throw new Error(`packaged CLI did not resolve the fixture definition: ${JSON.stringify(cliResult)}\n${trace.stderr}`);
-  }
+  if (cliResult.status !== "complete" || !cliResult.data.matches?.length) throw new Error(`packaged CLI did not resolve the fixture definition: ${JSON.stringify(cliResult)}`);
 
   const libraryRun = spawnSync(process.execPath, ["-e", [
     "const api = require('agent-symbol-search');",

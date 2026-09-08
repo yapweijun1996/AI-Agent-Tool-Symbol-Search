@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync, realpathSync } from "node:fs";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import test from "node:test";
 import * as ts from "typescript";
 import { DEFAULT_LIMITS, findDefinition as rawDefinition, findReferences as rawReferences, findImplementations as rawImplementations, getCapabilities as rawCapabilities, searchSymbols as rawSearch, listSymbols as rawSymbols } from "../src";
@@ -9,6 +9,29 @@ import { readBoundedText } from "../src/core/bounded-reader";
 import { canonicalizeRoot } from "../src/core/paths";
 import { discoverFiles } from "../src/core/discovery";
 import { findDefinition, findReferences, listSymbols, removeDirectory, searchSymbols, temporaryDirectory, tryCreateSymlink, writeSource } from "./helpers";
+
+test("compiler standard libraries use the canonical installation path", (context) => {
+  const parent = temporaryDirectory();
+  const root = join(parent, "repo");
+  const compilerPath = ts.sys.getExecutingFilePath();
+  const alias = join(parent, "compiler-alias");
+  try {
+    if (!tryCreateSymlink(dirname(compilerPath), alias, "dir")) {
+      context.skip("Directory symlinks are unavailable");
+      return;
+    }
+    context.mock.method(ts.sys, "getExecutingFilePath", () => join(alias, basename(compilerPath)));
+    writeSource(root, "tsconfig.json", JSON.stringify({ compilerOptions: { types: [] }, files: ["main.ts"] }));
+    writeSource(root, "main.ts", "export const visible: Array<string> = [];\n");
+    const project = buildProject(root, { limits: { ...DEFAULT_LIMITS, timeoutMs: 30_000 } });
+    assert.ok(project.program?.getSourceFiles().some(file => file.fileName.endsWith("lib.es5.d.ts")));
+    assert.deepEqual(project.diagnostics, []);
+    assert.equal(searchSymbols({ root, symbol: "visible" }).status, "complete");
+  } finally {
+    context.mock.restoreAll();
+    removeDirectory(parent);
+  }
+});
 
 test("compiler imports cannot read excluded, secret, symlink, or outside-root sources", () => {
   const parent = temporaryDirectory();

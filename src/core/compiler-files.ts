@@ -114,6 +114,9 @@ export class CompilerFiles {
   public createHost(options: ts.CompilerOptions): ts.CompilerHost {
     const host = ts.createCompilerHost(options, true);
     host.getCurrentDirectory = () => this.root.absolute;
+    // Node can load TypeScript through a Windows short path; use one canonical library identity.
+    host.getDefaultLibLocation = () => this.libraryRoot;
+    host.getDefaultLibFileName = compilerOptions => join(this.libraryRoot, ts.getDefaultLibFileName(compilerOptions));
     host.fileExists = path => this.fileExists(path);
     host.readFile = path => this.readFile(path);
     // The default getSourceFile closes over an unguarded reader, so replace it too.

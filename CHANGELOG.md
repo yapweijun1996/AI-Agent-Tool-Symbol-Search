@@ -20,6 +20,7 @@ All entries are user-visible changes. Package `0.1.0` is a release candidate pen
 - Added optional `search.project` selection with deterministic multiple-config recovery, repository-boundary validation, regular-file tsconfig enforcement, and project-scoped search file sets.
 - Added injectable CLI stdout/stderr streams for in-process JSON, diagnostics, and exit-code coverage.
 - Fixed transitive compiler imports bypassing discovery boundaries and resource budgets; configuration, package metadata, and type dependencies now use a guarded reader with separate compiler read metrics.
+- Fixed Windows short-path installations incorrectly excluding TypeScript standard libraries by using the canonical library location in the compiler host.
 - Fixed instance-method symbol normalization, literal element-access references, and definition/reference positions inside constructor bodies and parameter types.
 - Fixed nested `.gitignore` matching/negation, added `.mts`/`.cts` and declaration-file support, and rejected conflicting operations in dedicated library helpers at compile time and runtime.
 
