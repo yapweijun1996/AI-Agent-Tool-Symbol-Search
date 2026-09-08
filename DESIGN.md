@@ -102,11 +102,17 @@ A selected config's `include`/`files` set controls the Program, filtered to disc
 
 Compiler-resolved external package files may participate in type resolution, but only discovered in-root files can become result matches. This prevents `node_modules` and other external files from appearing as repository results.
 
+`CompilerFiles` owns all compiler/configuration content reads, including `CompilerHost.getSourceFile`; replacing only `readFile` would leave TypeScript's closed-over default reader unguarded. The host working directory is the canonical request root, never the caller's process directory. The reader admits discovered TypeScript sources, regular in-root JSON configuration/package metadata, root/ancestor `node_modules` dependencies, and the installed compiler's standard libraries/package metadata. Canonical containment, secret exclusions, `.git` exclusion, and symlink checks apply before content reads. Other external files and filtered repository sources are refused with sanitized diagnostics. Read attempts share file, single-file, total-byte, and cooperative deadline checks; cached content is charged once per request. Symlinked workspace packages are deliberately unavailable rather than widening the boundary.
+
+TypeScript discovery and explicit-file checks share the `.ts`, `.tsx`, `.mts`, `.cts` extension contract, including declaration files. Alias and single-root transient/instantiated symbols normalize to the same declaration identity; multiple-root union symbols are not arbitrarily collapsed. References include compiler-resolved literal element access but not unrelated string values. Constructor handling is restricted to the `constructor` keyword, so body expressions and parameter types resolve independently.
+
 ## 7. Discovery, security, and limits
 
 The root and every explicit path are canonicalized with `realpath`, then checked with a path-relative containment test. Explicit symlinks targeting outside the root fail. Directory and file symlinks are not followed during default traversal. Secret-like basenames (`.env`, `.env.*`, `*.pem`, `*.key`, `credentials.*`, and `secrets.*`) are always excluded, including when a pattern tries to include them.
 
 Traversal is sorted by path using locale-independent comparisons. `.gitignore` is honored. `--exclude` wins over all ordinary matching; `--include` acts as an allow-list and can override `.gitignore` and ordinary generated-directory filters. `.git`, `node_modules`, symlink, secret, and root boundaries cannot be overridden. Default generated/vendor directories include `.git`, `node_modules`, `dist`, `build`, `coverage`, `.cache`, `vendor`, and `generated`.
+
+Nested `.gitignore` matchers are evaluated in directory order with paths relative to each rule file, preserving negation and existing include/exclude precedence. Ignore content reads have per-file and aggregate file/byte limits; symlinked rule files are not read. Discovery metrics (`filesScanned`, `bytesParsed`) remain stable for existing consumers and benchmarks. Separate `compilerFilesRead` and `compilerBytesRead` metrics expose compiler read attempts and actual bytes, including configuration and dependencies.
 
 The resource defaults are:
 

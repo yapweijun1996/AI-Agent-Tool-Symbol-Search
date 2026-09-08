@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+import { isTypeScriptFile } from "./extensions";
 import type {
   Capabilities,
   Diagnostic,
@@ -110,7 +111,7 @@ function dedupeDiagnostics(diagnostics: readonly Diagnostic[]): Diagnostic[] {
   return result;
 }
 
-function errorResult(diagnostics: Diagnostic[], stats: Stats = {}): Result {
+export function errorResult(diagnostics: Diagnostic[], stats: Stats = {}): Result {
   return {
     schemaVersion: "1",
     status: "error",
@@ -210,13 +211,11 @@ function sourcePosition(context: ProjectContext, position: SourcePosition): { so
   };
   findInnermostNode(sourceFile);
   let constructor: ts.ConstructorDeclaration | undefined;
-  let candidate: ts.Node | undefined = node;
-  while (candidate && candidate !== sourceFile) {
-    if (ts.isConstructorDeclaration(candidate)) {
-      constructor = candidate;
-      break;
+  if (node && ts.isConstructorDeclaration(node)) {
+    const keyword = node.getChildren(sourceFile).find(child => child.kind === ts.SyntaxKind.ConstructorKeyword);
+    if (keyword && absolutePosition >= keyword.getStart(sourceFile) && absolutePosition < keyword.getEnd()) {
+      constructor = node;
     }
-    candidate = candidate.parent;
   }
   while (node && node !== sourceFile && !context.checker?.getSymbolAtLocation(node)) {
     node = node.parent;
@@ -259,7 +258,7 @@ function targetsFromRequest(context: ProjectContext, index: SymbolIndex, request
     if (position.node) {
       const constructor = position.constructorNode
         ? index.recordByNode.get(position.constructorNode)
-        : constructorRecordAtNode(index, position.node);
+        : undefined;
       if (constructor?.kind === "constructor") {
         return { symbols: new Set(), records: [constructor], fromPath: request.from.path, diagnostics };
       }
@@ -280,18 +279,6 @@ function targetsFromRequest(context: ProjectContext, index: SymbolIndex, request
 
 function definitionRecords(index: SymbolIndex, symbols: Set<ts.Symbol>): DeclarationRecord[] {
   return index.records.filter((record) => Boolean(record.canonicalSymbol && symbols.has(record.canonicalSymbol) && !record.isAlias));
-}
-
-function constructorRecordAtNode(index: SymbolIndex, node: ts.Node): DeclarationRecord | undefined {
-  let current: ts.Node | undefined = node;
-  while (current) {
-    if (ts.isConstructorDeclaration(current)) {
-      const record = index.recordByNode.get(current);
-      return record?.kind === "constructor" ? record : undefined;
-    }
-    current = current.parent;
-  }
-  return undefined;
 }
 
 function primaryRecords(index: SymbolIndex, symbols: Set<ts.Symbol>): Map<ts.Symbol, DeclarationRecord> {
@@ -335,7 +322,9 @@ function referenceMatches(
       timedOut = true;
       return;
     }
-    if (ts.isIdentifier(node)) {
+    const literalAccess = (ts.isStringLiteralLike(node) || ts.isNumericLiteral(node))
+      && ts.isElementAccessExpression(node.parent) && node.parent.argumentExpression === node;
+    if (ts.isIdentifier(node) || literalAccess) {
       const record = isDeclarationName(index, node);
       const symbol = symbolAtNode(context.checker!, node);
       if (symbol && symbols.has(symbol)) {
@@ -511,7 +500,7 @@ function symbolsForFile(context: ProjectContext, index: SymbolIndex, request: Sy
     const extension = resolved.value.relative.toLowerCase();
     return {
       matches: [],
-      diagnostics: [diagnostic(extension.endsWith(".ts") || extension.endsWith(".tsx") ? "SYMBOL_NOT_FOUND" : "UNSUPPORTED_LANGUAGE", `No TypeScript source file is available for ${request.path}`, extension.endsWith(".ts") || extension.endsWith(".tsx") ? "info" : "error", resolved.value.relative)]
+      diagnostics: [diagnostic(isTypeScriptFile(extension) ? "SYMBOL_NOT_FOUND" : "UNSUPPORTED_LANGUAGE", `No TypeScript source file is available for ${request.path}`, isTypeScriptFile(extension) ? "info" : "error", resolved.value.relative)]
     };
   }
   return {

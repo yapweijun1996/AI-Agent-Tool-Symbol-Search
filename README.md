@@ -66,16 +66,22 @@ const result = findDefinition({
 console.log(result.data.matches);
 ```
 
+Operation-specific helpers accept only their own optional `operation`; conflicting values return `INVALID_REQUEST` before repository access. Use `execute` for dynamic operation dispatch.
+
 ## Determinism, bounds, and safety
 
 - Every request has an explicit canonicalized root; explicit paths and symlinks cannot escape it.
 - Directory symlinks, generated/vendor directories, ignored files, and secret-like files are excluded by default.
+- Root and nested `.gitignore` rules use directory-relative matching and negation. TypeScript source discovery supports `.ts`, `.tsx`, `.mts`, `.cts`, and their declaration-file forms.
 - `--exclude` always wins; `--include` is an allow-list that can override `.gitignore` and ordinary generated-directory filters, but never secret, `.git`, `node_modules`, symlink, or root boundaries.
 - Results use stable POSIX-relative paths, 1-based lines, 0-based UTF-16 columns, versioned SHA-256 symbol IDs, deterministic ranking, and explicit ambiguity/truncation diagnostics.
 - Default and maximum result limits are 50 and 500. Discovery limits are 10,000 files, 2 MiB per file, and 100 MiB parsed bytes. The 5-second budget is cooperative and returns partial evidence with `TIMEOUT` when reached.
+- A guarded compiler reader independently enforces the same file/byte limits across configuration, source, package metadata, and type dependencies. Imports cannot re-admit ignored, excluded, secret-like, or symlinked repository sources. Blocked dependencies produce partial evidence, not a false complete result.
 - Search reads project files as data. It does not import or execute project code, install dependencies, build, test, modify repositories, access the network, or call an LLM. `npm ci` is setup-time installation, not search behavior.
 
 TypeScript project selection is deterministic: an explicit `project` must be a repository-relative `tsconfig*.json`; without one, exactly one discovered config is selected, multiple configs produce an actionable error, and no config uses fixed fallback compiler options. Project references are reported but not recursively built in V1. External package files are excluded from repository results.
+
+External type resolution is limited to regular files beneath the root/ancestor `node_modules` directories and the installed TypeScript standard libraries and their package metadata. Symlinked workspace dependencies are not followed. `stats.filesScanned`/`bytesParsed` retain discovery measurements; `compilerFilesRead`/`compilerBytesRead` report compiler read attempts and actual bytes, including dependencies. Ignore-rule reads have a separate bounded discovery budget.
 
 ## Verification and packaging
 

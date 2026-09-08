@@ -234,7 +234,18 @@ export function canonicalSymbol(checker: ts.TypeChecker, symbol: ts.Symbol | und
     return undefined;
   }
   try {
-    return symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
+    let current: ts.Symbol = symbol;
+    const seen = new Set<ts.Symbol>();
+    while (!seen.has(current)) {
+      seen.add(current);
+      const resolved: ts.Symbol = current.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(current) : current;
+      const roots = checker.getRootSymbols(resolved);
+      // A union member can have multiple roots; never choose an arbitrary declaration.
+      const next: ts.Symbol = roots.length === 1 ? roots[0] : resolved;
+      if (next === current) break;
+      current = next;
+    }
+    return current;
   } catch {
     return symbol;
   }
