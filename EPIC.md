@@ -6,7 +6,7 @@
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
 | Epic ID | SS-V1-TS |
-| Current state | V1 TypeScript vertical slice, release gates, CI, and package metadata for `0.1.0` are implemented and verified in the current working tree; npm publication is pending |
+| Current state | V1 TypeScript vertical slice, release gates, CI, package metadata, and public npm release for `0.1.0` are implemented and verified |
 
 ## Outcome
 
@@ -51,7 +51,7 @@ This epic is complete for the current V1 boundary only when all of the following
 5. `npm pack` installed-artifact smoke tests pass outside the source checkout.
 6. Cold/warm benchmark output is recorded without claiming an unmeasured latency target.
 7. README, DESIGN, SPEC, ROADMAP, TASK, CHANGELOG, and RELEASE agree with executable behavior.
-8. CI covers Ubuntu Node 22/24/26, Node 24 package smoke on Ubuntu/macOS/Windows, and the Ubuntu/Node 24 benchmark gate; interactive npm publication remains a maintainer action after these gates.
+8. CI covers Ubuntu Node 22/24/26, Node 24 package smoke on Ubuntu/macOS/Windows, and the Ubuntu/Node 24 benchmark gate; interactive npm publication, the annotated tag, and GitHub Release are completed after these gates.
 
 ## Workstreams
 
@@ -63,7 +63,7 @@ This epic is complete for the current V1 boundary only when all of the following
 | TypeScript adapter | Completed | Contract and TypeScript dependency | TypeScript golden fixtures and project-selection tests |
 | CLI/library integration | Completed | Core adapter | CLI/library parity and stdout/stderr tests |
 | Verification and fixtures | Completed | Each implemented operation | `npm run verify` |
-| Packaging, benchmarks, and release gates | Completed locally; publication pending | Passing tests | `npm run release:check`, CI matrix, `npm pack --dry-run --json`, and `RELEASE.md` |
+| Packaging, benchmarks, and release gates | Completed | Passing tests | `npm run release:check`, CI matrix, npm registry, fresh install, tag, and `RELEASE.md` |
 
 ## Decisions recorded
 
@@ -81,4 +81,4 @@ This epic is complete for the current V1 boundary only when all of the following
 
 ## Evidence required for closure
 
-Every workstream has executable evidence in the current working tree. Documentation alone does not close an implementation task. The package remains unpublished until maintainers perform the interactive npm, registry, tag, and GitHub Release steps in `RELEASE.md`; the first local publish does not claim provenance.
+Every workstream has executable evidence in the current working tree. Documentation alone does not close an implementation task. The package, registry verification, annotated tag, and GitHub Release for v0.1.0 are complete; the first local publish does not claim provenance.

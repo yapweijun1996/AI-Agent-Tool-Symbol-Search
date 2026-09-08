@@ -6,9 +6,9 @@
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
 
-All entries are user-visible changes. Package `0.1.0` is a release candidate pending interactive npm publication; no deployment, tag, or GitHub Release is implied.
+All entries are user-visible changes. Package `0.1.0` was published publicly to npm on 2026-09-08; the matching tag and GitHub Release are recorded in `RELEASE.md`.
 
-## 0.1.0 — release candidate (publication pending)
+## 0.1.0 — 2026-09-08
 
 ### Runtime
 
@@ -37,3 +37,4 @@ All entries are user-visible changes. Package `0.1.0` is a release candidate pen
 
 - Reconciled README, DESIGN, SPEC, EPIC, ROADMAP, TASK, and documentation-governance status with the verified working-tree implementation.
 - Recorded supported Node majors 22, 24, and 26, the v0.1.0 no-public-latency-SLO decision, interactive local publication without provenance, and next-release trusted publishing/provenance follow-up. JavaScript, Python, CFML, structural typing, dynamic dispatch, persistent cache, MCP, code slicing, impact analysis, and test selection remain outside this V1 scope.
+- Published `agent-symbol-search@0.1.0` publicly from the verified release commit; this local interactive release intentionally does not claim npm provenance.

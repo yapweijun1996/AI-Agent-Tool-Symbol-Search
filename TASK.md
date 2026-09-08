@@ -6,12 +6,12 @@
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
 | Source of truth | Current repository plus executable evidence |
-| Working-tree scope | V1 TypeScript implementation, coverage/CI/release gates, verification artifacts, and synchronized documentation; npm publication of 0.1.0 is pending |
+| Working-tree scope | V1 TypeScript implementation, coverage/CI/release gates, verification artifacts, synchronized documentation, and the published npm 0.1.0 release |
 
 ## Current repository truth
 
 - `HEAD` is the current V1 implementation line; the historical documentation-only baseline is an ancestor in Git history, not the current repository state. The exact checked-out commit is recorded by `git log --oneline --decorate -5` in the verification evidence.
-- The package has no published release; npm login, publish, tag, and GitHub Release remain user-authenticated steps in `RELEASE.md`.
+- The package `agent-symbol-search@0.1.0` is published publicly; registry, fresh-install, tag, and GitHub Release evidence is recorded in `RELEASE.md`.
 - Supported release Node majors are 22, 24, and 26. Node 20 and the local EOL Node 23 runtime are not release evidence.
 - JavaScript, Python, and CFML are proposed future adapters, not current capabilities.
 - No task is considered complete from documentation alone; each completed task below has executable evidence.
@@ -40,11 +40,11 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 
 ### RELEASE-001 — Prepare public npm publication
 
-**Status:** Complete locally; external publication pending.
+**Status:** Complete.
 
 **Deliverable:** `RELEASE.md`, `prepack`, `release:check`, `prepublishOnly`, package metadata, release recovery rules, and explicit no-provenance/trusted-publishing follow-up.
 
-**Acceptance evidence:** `npm run release:check`, `npm pack --dry-run --json`, `git diff --check`, and the CI workflow definition pass or remain ready for the maintainer's clean green release commit.
+**Acceptance evidence:** `npm run release:check`, `npm pack --dry-run --json`, `git diff --check`, green hosted CI, registry publication, fresh-install verification, the annotated tag, and GitHub Release are recorded in `RELEASE.md`.
 
 **Affected contract:** `README.md`, `SPEC.md` Section 16, `ROADMAP.md` Phase 6, and `CHANGELOG.md`.
 
@@ -136,7 +136,7 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 
 ### CI-001 — Verify supported runtimes and platforms
 
-**Status:** Complete locally; hosted execution pending.
+**Status:** Complete.
 
 **Deliverable:** `.github/workflows/ci.yml` with least-privilege read-only contents permission, Ubuntu Node 22/24/26 quality, Node 24 package smoke on Ubuntu/macOS/Windows, and Ubuntu/Node 24 benchmark verification.
 
@@ -144,11 +144,11 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 
 ### REVIEW-001 — Close the six code-review findings
 
-**Status:** Complete locally; hosted CI is a per-revision merge gate.
+**Status:** Complete.
 
 **Deliverable:** Guard compiler/configuration reads and dependency budgets; normalize instance-method symbols; scope constructor keyword resolution; honor nested ignore rules; support native TypeScript module/declaration extensions; reject conflicting helper operations through narrow types and runtime validation.
 
-**Acceptance evidence:** `test/review-regressions.test.ts` covers all six findings and additional configuration/read-failure cases. The original seven regression groups failed before the fixes. On Node 24.20.0, `npm ci` and `npm run release:check` pass with 43/43 tests and coverage of 92.91% lines, 84.85% branches, and 91.93% functions. Installed-package smoke checks CommonJS, ESM, `.mts`, method references, and helper rejection; benchmark fixtures have no `TIMEOUT`. Hosted CI must pass for this follow-up revision before merge; earlier CI only validates the prior release-candidate commit.
+**Acceptance evidence:** `test/review-regressions.test.ts` covers all six findings and additional configuration/read-failure cases. The original seven regression groups failed before the fixes. On Node 24.20.0, `npm ci` and `npm run release:check` pass with 43/43 tests and coverage of 92.91% lines, 84.85% branches, and 91.93% functions. Installed-package smoke checks CommonJS, ESM, `.mts`, method references, and helper rejection; benchmark fixtures have no `TIMEOUT`. Hosted PR and main CI pass for the merged release line.
 
 **CI follow-up:** PR #2 exposed Windows 8.3 short-path aliases in the installed TypeScript location. The compiler host now supplies canonical standard-library paths instead of widening the read policy. A library-location alias regression fails before the fix and passes after it; user-source symlink exclusions remain covered. Temporary fixture tracing was removed after confirming the cause.
 
@@ -167,6 +167,6 @@ git status --short
 
 `release:check` runs static safety checks, typecheck, build, tests, native coverage, packaged smoke, capability, benchmark, and documentation checks. `schema:check` is also run by CI. No network, deployment, npm publication, tag, or push is performed by these project commands except dependency installation needed for setup and the package smoke test.
 
-## Blockers and next step
+## Release completion
 
-No actionable repository implementation task remains blocked. The remaining release actions are maintainer-controlled: wait for green hosted CI, run interactive `npm login`/`npm whoami`, publish only after the registry preflight, verify a fresh install, then create the annotated tag and GitHub Release. Do not retry an uncertain npm publish without querying the registry. Future language adapters and ecosystem integration remain proposed in `ROADMAP.md`.
+No actionable repository implementation or v0.1.0 publication task remains blocked. The published registry version, fresh install, annotated tag, and GitHub Release are complete. Do not retry an uncertain npm publish without querying the registry. Future language adapters and ecosystem integration remain proposed in `ROADMAP.md`.
