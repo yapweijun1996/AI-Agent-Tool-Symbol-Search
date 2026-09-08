@@ -6,7 +6,15 @@
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
 
-All entries are user-visible changes. Package `0.1.0` was published publicly to npm on 2026-09-08; the matching tag and GitHub Release are recorded in `RELEASE.md`.
+All entries are user-visible changes. Package `0.1.1` is a documentation-only patch prepared to refresh the npm README and release metadata; it does not change runtime behavior. Package `0.1.0` was published publicly to npm on 2026-09-08; the matching tag and GitHub Release are recorded in `RELEASE.md`.
+
+## 0.1.1 — Unreleased
+
+### Documentation
+
+- Removed stale release-candidate wording from the public README and aligned package metadata with the documentation-only patch version.
+- Added an explicit 0.1.1 publication checklist while preserving the completed 0.1.0 release record.
+- No runtime, API, schema, dependency, or performance behavior changes are included in this patch.
 
 ## 0.1.0 — 2026-09-08
 

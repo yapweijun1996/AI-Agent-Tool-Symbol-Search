@@ -73,3 +73,16 @@ npm install --prefix "$(mktemp -d)" --no-save --no-package-lock --ignore-scripts
 The npm version, tag, GitHub Release, and source release line are recorded together here. The first local release intentionally has no provenance statement.
 
 A failed pre-publication gate may be fixed and rerun without creating a tag. If npm publication succeeds but tagging or GitHub Release creation fails, retry only the Git/GitHub steps. Never overwrite `0.1.0`; publish `0.1.1` for a later fix, deprecating a defective version when appropriate.
+
+## v0.1.1 documentation patch preparation
+
+| Field | Value |
+|---|---|
+| Target | `agent-symbol-search@0.1.1` |
+| Status | Prepared; npm publication pending |
+| Scope | README and release metadata refresh only; no runtime, API, schema, dependency, or benchmark changes |
+| Intended tag | `v0.1.1` |
+
+This patch is prepared to replace the stale release-candidate wording currently visible in the immutable npm `0.1.0` README snapshot. It must be published as a new patch version; `0.1.0` must never be republished or overwritten.
+
+Before publishing, run `npm ci`, `npm run release:check`, `npm audit --audit-level=high`, `npm pack --dry-run --json`, and `git diff --check`. After an interactive `npm publish --access public`, verify `npm view agent-symbol-search@0.1.1 version dist-tags --json` and a fresh install before creating the annotated `v0.1.1` tag and matching GitHub Release. The publication should use trusted publishing/provenance when the environment supports it; do not claim provenance for a local interactive publish.
