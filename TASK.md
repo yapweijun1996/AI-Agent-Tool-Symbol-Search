@@ -6,13 +6,13 @@
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
 | Source of truth | Current repository plus executable evidence |
-| Working-tree scope | V1 TypeScript implementation, coverage/CI/release gates, verification artifacts, synchronized documentation, published npm 0.1.0 release, and the prepared documentation-only npm 0.1.1 patch |
+| Working-tree scope | V1 TypeScript implementation, coverage/CI/release gates, verification artifacts, synchronized documentation, published npm 0.1.1 release, and the prepared agent integration npm 0.1.2 patch |
 
 ## Current repository truth
 
 - `HEAD` is the current V1 implementation line; the historical documentation-only baseline is an ancestor in Git history, not the current repository state. The exact checked-out commit is recorded by `git log --oneline --decorate -5` in the verification evidence.
-- The package `agent-symbol-search@0.1.0` is published publicly; registry, fresh-install, tag, and GitHub Release evidence is recorded in `RELEASE.md`.
-- The working-tree package version is `0.1.1`; it is a documentation-only patch for the npm README and release metadata, with no runtime or contract changes.
+- The package `agent-symbol-search@0.1.1` is published publicly; registry, fresh-install, tag, and GitHub Release evidence is recorded in `RELEASE.md`.
+- The working-tree package version is `0.1.2`; it is a documentation-only patch that adds the npm-distributed agent skill and integration guide, with no runtime or contract changes.
 - Supported release Node majors are 22, 24, and 26. Node 20 and the local EOL Node 23 runtime are not release evidence.
 - JavaScript, Python, and CFML are proposed future adapters, not current capabilities.
 - No task is considered complete from documentation alone; each completed task below has executable evidence.
@@ -48,6 +48,16 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 **Acceptance evidence:** `npm run release:check`, `npm pack --dry-run --json`, `git diff --check`, green hosted CI, registry publication, fresh-install verification, the annotated tag, and GitHub Release are recorded in `RELEASE.md`.
 
 **Affected contract:** `README.md`, `SPEC.md` Section 16, `ROADMAP.md` Phase 6, and `CHANGELOG.md`.
+
+### AGENT-001 — Document npm and skill integration
+
+**Status:** In progress.
+
+**Deliverable:** An npm-distributed `SKILL.md` and README workflow that teach AI coding agents how to install the package, choose operations, pass explicit TypeScript projects, interpret bounded JSON results, and hand locators to source extraction.
+
+**Acceptance evidence:** The skill file has valid frontmatter, README links resolve from a clean checkout, `npm pack --dry-run --json` includes `skills/agent-symbol-search/SKILL.md`, and the documented CLI and library examples pass the existing package smoke and documentation checks.
+
+**Affected contract:** `README.md`, `DOCUMENTATION_STANDARD.md`, `RELEASE.md`, and npm package `files` metadata. Runtime APIs and schemas remain unchanged.
 
 ### CONTRACT-001 — Implement versioned schemas
 
@@ -170,4 +180,4 @@ git status --short
 
 ## Release completion
 
-No actionable repository implementation or v0.1.0 publication task remains blocked. The published registry version, fresh install, annotated tag, and GitHub Release are complete. The 0.1.1 documentation-only patch is prepared but not published; do not retry an uncertain npm publish without querying the registry. Future language adapters and ecosystem integration remain proposed in `ROADMAP.md`.
+No actionable repository implementation or v0.1.1 publication task remains blocked. The published registry version, fresh install, annotated tag, and GitHub Release are complete. The 0.1.2 agent integration documentation-only patch is prepared but not published; do not retry an uncertain npm publish without querying the registry. Future language adapters and ecosystem integration remain proposed in `ROADMAP.md`.

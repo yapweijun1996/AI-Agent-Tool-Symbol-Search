@@ -6,9 +6,17 @@
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
 
-All entries are user-visible changes. Package `0.1.1` is a documentation-only patch prepared to refresh the npm README and release metadata; it does not change runtime behavior. Package `0.1.0` was published publicly to npm on 2026-09-08; the matching tag and GitHub Release are recorded in `RELEASE.md`.
+All entries are user-visible changes. Package `0.1.2` adds an agent-facing skill and npm integration documentation without changing runtime behavior. Package `0.1.1` was published publicly to npm on 2026-09-08; the matching tag and GitHub Release are recorded in `RELEASE.md`.
 
-## 0.1.1 — Unreleased
+## 0.1.2 — Unreleased
+
+### Documentation
+
+- Added `skills/agent-symbol-search/SKILL.md` with npm installation, operation selection, JSON result handling, and safety boundaries for AI coding agents.
+- Documented npm package installation, `npx --no-install` CLI usage, CommonJS/ESM examples, project selection, and the handoff from symbol locators to source extraction.
+- Added the agent skill to the npm package file list; no runtime, API, schema, dependency, or performance behavior changes are included in this patch.
+
+## 0.1.1 — 2026-09-08
 
 ### Documentation
 

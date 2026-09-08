@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -17,6 +17,10 @@ try {
   const archive = join(temporary, packageFile);
   const installRoot = join(temporary, "installed");
   execFileSync(npmExecutable, ["install", "--prefix", installRoot, "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", archive], { cwd: repository, stdio: "inherit", shell: useShell });
+
+  const skillPath = join(installRoot, "node_modules", "agent-symbol-search", "skills", "agent-symbol-search", "SKILL.md");
+  const skill = readFileSync(skillPath, "utf8");
+  if (!skill.startsWith("---") || !skill.includes("name: agent-symbol-search")) throw new Error("packaged agent skill is missing or invalid");
 
   const cli = join(installRoot, "node_modules", ".bin", cliExecutable);
   const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--project", "tsconfig.json", "--symbol", "resolveConfig"], { encoding: "utf8", shell: useShell });
@@ -46,7 +50,7 @@ try {
     "if (invalid.status !== 'error' || invalid.diagnostics[0]?.code !== 'INVALID_REQUEST') process.exit(1);"
   ].join("\n")], { cwd: installRoot, encoding: "utf8" });
   if (esmRun.status !== 0) throw new Error(`packaged ESM library failed: ${esmRun.stderr}`);
-  console.log("smoke: packaged CLI, CommonJS, ESM, and review regressions passed outside the source checkout");
+  console.log("smoke: packaged CLI, CommonJS, ESM, agent skill, and review regressions passed outside the source checkout");
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }
