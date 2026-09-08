@@ -22,7 +22,7 @@ try {
   const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--project", "tsconfig.json", "--symbol", "resolveConfig"], { encoding: "utf8", shell: useShell });
   if (cliRun.status !== 0) throw new Error(`packaged CLI exited ${cliRun.status}: ${cliRun.stderr}`);
   const cliResult = JSON.parse(cliRun.stdout);
-  if (cliResult.status !== "complete" || !cliResult.data.matches?.length) throw new Error("packaged CLI did not resolve the fixture definition");
+  if (cliResult.status !== "complete" || !cliResult.data.matches?.length) throw new Error(`packaged CLI did not resolve the fixture definition: ${JSON.stringify(cliResult)}`);
 
   const libraryRun = spawnSync(process.execPath, ["-e", [
     "const api = require('agent-symbol-search');",
@@ -36,7 +36,7 @@ try {
   const moduleCli = spawnSync(cli, ["references", "--root", moduleRoot, "--symbol", "Store.save"], { cwd: installRoot, encoding: "utf8", shell: useShell });
   if (moduleCli.status !== 0) throw new Error(`packaged module CLI failed: ${moduleCli.stderr}`);
   const moduleResult = JSON.parse(moduleCli.stdout);
-  if (moduleResult.status !== "complete" || moduleResult.data.matches.length !== 2) throw new Error("packaged CLI missed instance method references in .mts");
+  if (moduleResult.status !== "complete" || moduleResult.data.matches.length !== 2) throw new Error(`packaged CLI missed instance method references in .mts: ${JSON.stringify(moduleResult)}`);
   const esmRun = spawnSync(process.execPath, ["--input-type=module", "-e", [
     "import { findDefinition } from 'agent-symbol-search';",
     `const root = ${JSON.stringify(moduleRoot)};`,
