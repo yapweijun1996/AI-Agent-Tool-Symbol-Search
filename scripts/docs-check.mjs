@@ -49,6 +49,22 @@ const task = contents.get("TASK.md") ?? "";
 const changelog = contents.get("CHANGELOG.md") ?? "";
 const benchmark = contents.get("BENCHMARK.md") ?? "";
 const version = packageJson.version;
+const agentSkillPath = resolve("skills/agent-symbol-search/SKILL.md");
+if (!existsSync(agentSkillPath)) {
+  fail("skills/agent-symbol-search/SKILL.md: missing");
+} else {
+  const agentSkill = readFileSync(agentSkillPath, "utf8");
+  const frontmatter = agentSkill.match(/^---\n([\s\S]*?)\n---\n/);
+  if (!frontmatter || !/^name:\s*agent-symbol-search\s*$/m.test(frontmatter[1]) || !/^description:\s*.+$/m.test(frontmatter[1])) {
+    fail("skills/agent-symbol-search/SKILL.md: missing required frontmatter");
+  }
+  if (!readme.includes("./skills/agent-symbol-search/SKILL.md")) {
+    fail("README.md: missing bundled agent skill link");
+  }
+  if (!packageJson.files?.includes("skills")) {
+    fail("package.json: npm files list does not include skills");
+  }
+}
 
 for (const phrase of ["npm ci", "npm run verify", "TypeScript", "JSON", "read-only", "SPEC.md", "TASK.md"]) {
   if (!readme.includes(phrase)) fail(`README.md: missing required phrase ${phrase}`);

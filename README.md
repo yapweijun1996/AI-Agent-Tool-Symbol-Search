@@ -5,7 +5,7 @@
 | Status | Active |
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
-| Package version | 0.1.1 (documentation patch release; no runtime changes) |
+| Package version | 0.1.2 (agent integration documentation; no runtime changes) |
 
 > Deterministic, local-first, read-only symbol navigation for AI coding agents.
 
@@ -39,6 +39,22 @@ JavaScript, Python, and CFML are proposed future adapters, not shipped capabilit
 
 Requirements: Node.js 22, Node.js 24, or Node.js 26 and npm. Node 20 and Node 23 are not supported release runtimes.
 
+### Install from npm
+
+Install the package in the repository where the agent will navigate:
+
+```bash
+npm install --save-dev agent-symbol-search
+```
+
+The package exposes the `agent-symbol-search` executable, a CommonJS/ESM library API, JSON schemas, and an agent skill at [`skills/agent-symbol-search/SKILL.md`](./skills/agent-symbol-search/SKILL.md). An agent runtime can load that skill file after npm installation to get the operation-selection and result-handling workflow.
+
+Use `npx --no-install` after installation so a search never downloads an unpinned package implicitly:
+
+```bash
+npx --no-install agent-symbol-search capabilities --root /path/to/repository
+```
+
 ```bash
 npm ci
 npm run build
@@ -67,6 +83,19 @@ console.log(result.data.matches);
 ```
 
 Operation-specific helpers accept only their own optional `operation`; conflicting values return `INVALID_REQUEST` before repository access. Use `execute` for dynamic operation dispatch.
+
+## AI agent workflow
+
+Use the bundled [`agent-symbol-search` skill](./skills/agent-symbol-search/SKILL.md) when an agent needs a bounded TypeScript locator before editing code. The recommended sequence is:
+
+1. Set one explicit repository `root`.
+2. Call `capabilities` if supported operations are unknown.
+3. Choose `search`, `symbols`, `definition`, `references`, or `implementations` for the narrow question.
+4. Pass `--project <tsconfig*.json>` or `project` whenever the repository contains multiple TypeScript configurations; never guess.
+5. Parse the JSON result and inspect `status`, `data.matches`, `diagnostics`, `truncation`, and `stats`.
+6. Pass selected paths and ranges to `agent-code-slice` or another source reader when source text is needed.
+
+The tool returns locations and evidence, not full source bodies. It is not a replacement for editing, testing, source extraction, or impact analysis.
 
 ## Determinism, bounds, and safety
 
@@ -97,7 +126,7 @@ npm run benchmark:check
 npm run docs:check
 ```
 
-`coverage` rebuilds the test artifacts and runs serial Node native coverage over product sources only, enforcing lines ≥85%, functions ≥80%, and branches ≥75%. `smoke:pack` installs the npm tarball in a temporary directory outside the source checkout and exercises both the CLI and library API. `BENCHMARK.md` records cold and warm in-memory measurements for deterministic small, medium, and large generated fixtures; every release fixture must avoid `TIMEOUT`, but v0.1.0 makes no public latency SLO. `v0.1.1` is a documentation-only patch and does not alter runtime behavior. `RELEASE.md` records the completed publication and recovery checklist.
+`coverage` rebuilds the test artifacts and runs serial Node native coverage over product sources only, enforcing lines ≥85%, functions ≥80%, and branches ≥75%. `smoke:pack` installs the npm tarball in a temporary directory outside the source checkout and exercises both the CLI and library API. `BENCHMARK.md` records cold and warm in-memory measurements for deterministic small, medium, and large generated fixtures; every release fixture must avoid `TIMEOUT`, but v0.1.0 makes no public latency SLO. `v0.1.1` is the published documentation patch, and `v0.1.2` adds the agent skill and npm integration documentation without altering runtime behavior. `RELEASE.md` records the completed publication and recovery checklist.
 
 ## Documentation
 
@@ -108,5 +137,5 @@ npm run docs:check
 - [`TASK.md`](./TASK.md) — evidence-backed task status
 - [`CHANGELOG.md`](./CHANGELOG.md) — published release and historical changes
 - [`BENCHMARK.md`](./BENCHMARK.md) — reproducible performance baseline and release gate
-- [`RELEASE.md`](./RELEASE.md) — v0.1.0 release and v0.1.1 publication checklists
+- [`RELEASE.md`](./RELEASE.md) — v0.1.0/v0.1.1 release records and v0.1.2 checklist
 - [`DOCUMENTATION_STANDARD.md`](./DOCUMENTATION_STANDARD.md) — documentation governance

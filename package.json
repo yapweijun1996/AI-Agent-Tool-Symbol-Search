@@ -1,6 +1,6 @@
 {
   "name": "agent-symbol-search",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Deterministic, local-first, read-only symbol navigation for AI coding agents.",
   "license": "MIT",
   "type": "commonjs",
@@ -43,6 +43,7 @@
     "SPEC.md",
     "CHANGELOG.md",
     "BENCHMARK.md",
+    "skills",
     "LICENSE"
   ],
   "scripts": {

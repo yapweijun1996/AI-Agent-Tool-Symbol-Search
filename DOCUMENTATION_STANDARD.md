@@ -41,7 +41,8 @@ Each document has one primary responsibility. Do not duplicate authoritative req
 | `TASK.md` | Active implementation tasks and acceptance checks | Current delivery plan |
 | `CHANGELOG.md` | Released user-visible changes and migration notes | Historical release record |
 | `BENCHMARK.md` | Reproducible measured performance baseline, timeout gate, and limitations | Benchmark evidence, not a product guarantee |
-| `RELEASE.md` | v0.1.0 repository, npm, registry, tag, and GitHub Release checklist | Publication procedure and recovery rules |
+| `RELEASE.md` | v0.1.0/v0.1.1 release records and v0.1.2 npm/skill checklist | Publication procedure and recovery rules |
+| `skills/agent-symbol-search/SKILL.md` | Agent-facing npm installation, operation selection, result handling, and safety workflow | Reusable agent invocation guidance |
 
 If two documents disagree, `SPEC.md` governs runtime behavior, executable schemas/tests govern exact machine-readable behavior, and `ROADMAP.md` never overrides either.
 
@@ -255,16 +256,17 @@ The change is ready when:
 
 ## 13. Current implementation baseline
 
-The V1 TypeScript vertical slice and v0.1.0 repository release gates are implemented and verified in the current working tree, but npm publication is pending. Supported release Node majors are 22, 24, and 26; the first local publication does not claim provenance or a public latency SLO. The following documents now describe the verified implementation and its boundaries:
+The V1 TypeScript vertical slice and v0.1.1 repository release gates are implemented and verified in the current working tree. The v0.1.2 agent integration documentation patch is prepared but not published. Supported release Node majors are 22, 24, and 26; local publications do not claim provenance or a public latency SLO. The following documents now describe the verified implementation and its boundaries:
 
-- `README.md`: product overview, quick start, support matrix, and verification commands;
+- `README.md`: product overview, npm quick start, agent workflow, support matrix, and verification commands;
 - `DESIGN.md`: implemented architecture, ownership boundaries, and trade-offs;
 - `SPEC.md`: schema-backed V1 request/result contract;
 - `EPIC.md`: completed TypeScript vertical-slice outcome and non-goals;
 - `ROADMAP.md`: completed V1 phases and proposed future phases;
 - `TASK.md`: evidence-backed delivery status;
-- `CHANGELOG.md`: release-candidate runtime behavior and documentation history;
+- `CHANGELOG.md`: released runtime behavior and documentation history;
 - `BENCHMARK.md`: measured baseline, no-timeout release gate, and explicit performance limitations;
-- `RELEASE.md`: maintainer-controlled publication, verification, and recovery checklist.
+- `RELEASE.md`: maintainer-controlled publication, verification, and recovery checklist;
+- `skills/agent-symbol-search/SKILL.md`: reusable agent instructions distributed with the npm package.
 
 Documentation for JavaScript, Python, and CFML MUST preserve the distinction between proposed/structured/heuristic support and confirmed semantic resolution. A future public release MUST repeat the clean-checkout, package, capability, schema, fixture, bounded-result, read-only, coverage, CI, registry, and platform-specific review gates. The next release SHOULD use npm trusted publishing and provenance rather than repeating the v0.1.0 local interactive process.
