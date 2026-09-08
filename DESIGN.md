@@ -5,7 +5,7 @@
 | Status | Active |
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
-| Implementation baseline | V1 TypeScript vertical slice and v0.1.1 release gates are implemented; v0.1.2 agent integration documentation prepared |
+| Implementation baseline | V1 TypeScript vertical slice and v0.1.1/v0.1.2 release gates are implemented and published |
 
 ## 1. Purpose and boundary
 
@@ -15,9 +15,9 @@ The implementation locates code; it does not return source bodies. `agent-code-s
 
 ## 2. Verified current state
 
-The working tree now contains a Node.js/TypeScript package, JSON schemas, a CLI, a library API, TypeScript fixtures, contract tests, security tests, native coverage gates, a CI matrix, a benchmark baseline, and an agent-facing skill. The published baseline is `0.1.1` (2026-09-08); working-tree version `0.1.2` is a documentation-only patch prepared to distribute the npm/skill integration guide. The original documentation changes in the working tree are preserved as the release history.
+The working tree now contains a Node.js/TypeScript package, JSON schemas, a CLI, a library API, TypeScript fixtures, contract tests, security tests, native coverage gates, a CI matrix, a benchmark baseline, and an agent-facing skill. Published versions are `0.1.1` and `0.1.2` (2026-09-08); `0.1.2` is a documentation-only patch distributing the npm/skill integration guide. The original documentation changes in the working tree are preserved as the release history.
 
-The executable TypeScript capability is verified by the test suite and packaged-artifact smoke test. JavaScript, Python, and CFML remain proposed adapters. Coverage thresholds are product-source gates, while benchmark timings remain evidence only; v0.1.0 makes no public latency SLO. The published v0.1.1 and prepared v0.1.2 documentation patches do not change these runtime claims.
+The executable TypeScript capability is verified by the test suite and packaged-artifact smoke test. JavaScript, Python, and CFML remain proposed adapters. Coverage thresholds are product-source gates, while benchmark timings remain evidence only; v0.1.0 makes no public latency SLO. The published v0.1.1 and v0.1.2 documentation patches do not change these runtime claims.
 
 ## 3. V1 delivery boundary
 

@@ -41,7 +41,7 @@ Each document has one primary responsibility. Do not duplicate authoritative req
 | `TASK.md` | Active implementation tasks and acceptance checks | Current delivery plan |
 | `CHANGELOG.md` | Released user-visible changes and migration notes | Historical release record |
 | `BENCHMARK.md` | Reproducible measured performance baseline, timeout gate, and limitations | Benchmark evidence, not a product guarantee |
-| `RELEASE.md` | v0.1.0/v0.1.1 release records and v0.1.2 npm/skill checklist | Publication procedure and recovery rules |
+| `RELEASE.md` | v0.1.0/v0.1.1/v0.1.2 release records and npm/skill checklists | Publication procedure and recovery rules |
 | `skills/agent-symbol-search/SKILL.md` | Agent-facing npm installation, operation selection, result handling, and safety workflow | Reusable agent invocation guidance |
 
 If two documents disagree, `SPEC.md` governs runtime behavior, executable schemas/tests govern exact machine-readable behavior, and `ROADMAP.md` never overrides either.
@@ -256,7 +256,7 @@ The change is ready when:
 
 ## 13. Current implementation baseline
 
-The V1 TypeScript vertical slice and v0.1.1 repository release gates are implemented and verified in the current working tree. The v0.1.2 agent integration documentation patch is prepared but not published. Supported release Node majors are 22, 24, and 26; local publications do not claim provenance or a public latency SLO. The following documents now describe the verified implementation and its boundaries:
+The V1 TypeScript vertical slice and v0.1.1/v0.1.2 repository release gates are implemented and verified in the current working tree. The v0.1.2 agent integration documentation patch is published. Supported release Node majors are 22, 24, and 26; local publications do not claim provenance or a public latency SLO. The following documents now describe the verified implementation and its boundaries:
 
 - `README.md`: product overview, npm quick start, agent workflow, support matrix, and verification commands;
 - `DESIGN.md`: implemented architecture, ownership boundaries, and trade-offs;

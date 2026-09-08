@@ -6,15 +6,21 @@
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
 
-All entries are user-visible changes. Package `0.1.2` adds an agent-facing skill and npm integration documentation without changing runtime behavior. Package `0.1.1` was published publicly to npm on 2026-09-08; the matching tag and GitHub Release are recorded in `RELEASE.md`.
+All entries are user-visible changes. Package `0.1.2` adds an agent-facing skill and npm integration documentation without changing runtime behavior. Packages `0.1.1` and `0.1.2` were published publicly to npm on 2026-09-08; their matching tags and GitHub Releases are recorded in `RELEASE.md`.
 
-## 0.1.2 — Unreleased
+## 0.1.2 — 2026-09-08
 
 ### Documentation
 
 - Added `skills/agent-symbol-search/SKILL.md` with npm installation, operation selection, JSON result handling, and safety boundaries for AI coding agents.
 - Documented npm package installation, `npx --no-install` CLI usage, CommonJS/ESM examples, project selection, and the handoff from symbol locators to source extraction.
 - Added the agent skill to the npm package file list; no runtime, API, schema, dependency, or performance behavior changes are included in this patch.
+
+### Release
+
+- Published `agent-symbol-search@0.1.2` publicly with `latest` pointing to `0.1.2`.
+- Created annotated Git tag `v0.1.2` and the matching public GitHub Release from the green `main` commit.
+- This local interactive publish intentionally does not claim npm provenance.
 
 ## 0.1.1 — 2026-09-08
 

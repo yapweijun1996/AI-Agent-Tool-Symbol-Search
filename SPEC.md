@@ -5,7 +5,7 @@
 | Status | Active |
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
-| Runtime status | V1 TypeScript operations and v0.1.1 release gates are implemented and verified; v0.1.2 agent integration documentation prepared |
+| Runtime status | V1 TypeScript operations and v0.1.1/v0.1.2 release gates are implemented and verified; v0.1.2 is published |
 | Compatibility | Schema version 1; TypeScript-only V1 contract |
 
 This is the normative V1 contract. The maintained JSON schemas under `schemas/`, runtime validation, and contract tests are the executable form of its machine-readable portions.
@@ -306,7 +306,7 @@ During a search, the package does not write source, cache, lock, or result files
 
 The public schema is versioned through `schemaVersion`. Breaking field, enum, range, identity, or ordering changes require a new schema version or an explicitly documented migration. The package version, compiler version, adapter, and effective project configuration are reported when they affect resolution.
 
-The published package is the `0.1.1` release; the working-tree package version `0.1.2` is a documentation-only patch and does not change this contract. npm publication, the annotated tag, and GitHub Release for 0.1.1 are recorded by the completed checklist in `RELEASE.md`. Reproducible verification is provided by:
+The published packages are the `0.1.1` and `0.1.2` releases; `0.1.2` is a documentation-only patch and does not change this contract. npm publication, the annotated tag, and GitHub Release for both releases are recorded by the completed checklist in `RELEASE.md`. Reproducible verification is provided by:
 
 ```bash
 npm ci

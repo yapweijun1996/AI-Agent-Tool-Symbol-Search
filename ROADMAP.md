@@ -13,7 +13,7 @@ This roadmap describes sequencing and future intent. Runtime capability claims c
 
 **Status: Completed for V1 TypeScript — package implemented and verified in the current working tree.**
 
-The repository now contains a Node.js/TypeScript package, schemas, CLI/library API, fixtures, contract/security tests, native coverage gates, CI configuration, release metadata, a benchmark baseline, and an agent-facing skill. Package `0.1.1` was published publicly on 2026-09-08. Package version `0.1.2` is prepared as a documentation-only patch to distribute the skill and npm integration guide; it does not change runtime behavior. The original documentation-only baseline remains visible in Git history; it is not current runtime state.
+The repository now contains a Node.js/TypeScript package, schemas, CLI/library API, fixtures, contract/security tests, native coverage gates, CI configuration, release metadata, a benchmark baseline, and an agent-facing skill. Packages `0.1.1` and `0.1.2` were published publicly on 2026-09-08. Version `0.1.2` is a documentation-only patch that distributes the skill and npm integration guide; it does not change runtime behavior. The original documentation-only baseline remains visible in Git history; it is not current runtime state.
 
 ## Phase 0 — Contract foundation
 
@@ -136,7 +136,7 @@ Measure bounded scaling, establish stable release gates, and prepare a public pa
 - `BENCHMARK.md` records cold and warm in-memory files, bytes, time, memory, matches, and truncation for generated small, medium, and large fixtures; every fixture is rejected if it reaches `TIMEOUT`.
 - Native Node coverage measures product sources only with lines ≥85%, functions ≥80%, and branches ≥75%; normal tests use a 30-second `EngineOptions` budget while production remains 5 seconds.
 - GitHub Actions runs Ubuntu Node 22/24/26 quality, Node 24 package smoke on Ubuntu/macOS/Windows, and the Ubuntu/Node 24 benchmark check with `contents: read`.
-- Package metadata, `prepack`, `release:check`, `prepublishOnly`, and `RELEASE.md` support the published public unscoped npm release `agent-symbol-search@0.1.1` and the prepared agent integration documentation patch `0.1.2`.
+- Package metadata, `prepack`, `release:check`, `prepublishOnly`, and `RELEASE.md` support the published public unscoped npm releases `agent-symbol-search@0.1.1` and `agent-symbol-search@0.1.2`.
 
 ### Remaining evidence
 
@@ -144,7 +144,7 @@ The green CI workflow, npm registry verification, fresh install, annotated tag, 
 
 ## Next release follow-up
 
-Adopt npm trusted publishing and provenance after the local interactive v0.1.1 process is complete; the v0.1.2 patch remains a separate agent integration documentation refresh.
+Adopt npm trusted publishing and provenance for the next release; `v0.1.2` completed the local interactive publication path without claiming provenance.
 
 ## Non-commitments
 

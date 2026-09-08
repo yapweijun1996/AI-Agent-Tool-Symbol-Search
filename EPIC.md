@@ -6,7 +6,7 @@
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
 | Epic ID | SS-V1-TS |
-| Current state | V1 TypeScript vertical slice, release gates, CI, package metadata, and public npm release for `0.1.1` are implemented and verified; agent integration documentation-only `0.1.2` patch prepared |
+| Current state | V1 TypeScript vertical slice, release gates, CI, package metadata, and public npm releases for `0.1.1` and `0.1.2` are implemented and verified |
 
 ## Outcome
 
@@ -81,4 +81,4 @@ This epic is complete for the current V1 boundary only when all of the following
 
 ## Evidence required for closure
 
-Every workstream has executable evidence in the current working tree. Documentation alone does not close an implementation task. The package, registry verification, annotated tag, and GitHub Release for v0.1.1 are complete; the agent integration documentation-only v0.1.2 patch changes no implementation behavior and remains pending publication. The local interactive publishes do not claim provenance.
+Every workstream has executable evidence in the current working tree. Documentation alone does not close an implementation task. The package, registry verification, annotated tag, and GitHub Release for v0.1.1 and v0.1.2 are complete; the v0.1.2 agent integration patch changes no implementation behavior. The local interactive publishes do not claim provenance.

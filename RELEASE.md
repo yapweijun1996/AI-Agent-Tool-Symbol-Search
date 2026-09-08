@@ -87,13 +87,21 @@ This patch replaced the stale release-candidate wording from the immutable npm `
 
 Publication evidence: npm reports `agent-symbol-search@0.1.1` with `latest` pointing to `0.1.1`; a fresh Node 24 install confirms the CLI, CommonJS API, and ESM API; the tag points to the merged `main` commit; and the GitHub Release is public and non-draft.
 
-## v0.1.2 agent integration documentation preparation
+## v0.1.2 agent integration documentation release
 
 | Field | Value |
 |---|---|
 | Target | `agent-symbol-search@0.1.2` |
-| Status | Prepared; npm publication pending |
+| Status | Published 2026-09-08 |
 | Scope | Add the npm-distributed `skills/agent-symbol-search/SKILL.md` and README integration guide; no runtime, API, schema, dependency, or benchmark changes |
-| Intended tag | `v0.1.2` |
+| npm package | [`agent-symbol-search@0.1.2`](https://www.npmjs.com/package/agent-symbol-search/v/0.1.2) |
+| Tag | [`v0.1.2`](https://github.com/yapweijun1996/AI-Agent-Tool-Symbol-Search/releases/tag/v0.1.2) |
+| GitHub Release | [`v0.1.2`](https://github.com/yapweijun1996/AI-Agent-Tool-Symbol-Search/releases/tag/v0.1.2) |
 
-This patch teaches AI coding agents how to install the package, choose operations, pass explicit TypeScript projects, interpret bounded JSON results, and hand locators to source-extraction tools. Before publishing, run the full local release gate and verify that the packed artifact includes `skills/agent-symbol-search/SKILL.md`; publish only after the merged `main` commit has green CI. After interactive publication, verify the registry and a fresh install before creating the annotated tag and GitHub Release.
+This patch teaches AI coding agents how to install the package, choose operations, pass explicit TypeScript projects, interpret bounded JSON results, and hand locators to source-extraction tools. The merged `main` commit passed CI, the packed artifact included `skills/agent-symbol-search/SKILL.md`, and the public registry plus fresh-install checks passed before the annotated tag and GitHub Release were created. The local interactive publish intentionally does not claim npm provenance.
+
+Publication evidence:
+
+- `npm view agent-symbol-search dist-tags versions --json` reports version `0.1.2` and `latest: 0.1.2`.
+- A fresh temporary install verifies the packaged CLI and CommonJS library API.
+- Annotated tag `v0.1.2` dereferences to the published `main` commit `4f81a6ada296a1f454da53c0718adafc149fee0b`.

@@ -6,13 +6,14 @@
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
 | Source of truth | Current repository plus executable evidence |
-| Working-tree scope | V1 TypeScript implementation, coverage/CI/release gates, verification artifacts, synchronized documentation, published npm 0.1.1 release, and the prepared agent integration npm 0.1.2 patch |
+| Working-tree scope | V1 TypeScript implementation, coverage/CI/release gates, verification artifacts, synchronized documentation, and published npm 0.1.1 and 0.1.2 releases |
 
 ## Current repository truth
 
 - `HEAD` is the current V1 implementation line; the historical documentation-only baseline is an ancestor in Git history, not the current repository state. The exact checked-out commit is recorded by `git log --oneline --decorate -5` in the verification evidence.
 - The package `agent-symbol-search@0.1.1` is published publicly; registry, fresh-install, tag, and GitHub Release evidence is recorded in `RELEASE.md`.
-- The working-tree package version is `0.1.2`; it is a documentation-only patch that adds the npm-distributed agent skill and integration guide, with no runtime or contract changes.
+- The package version is `0.1.2`; it is a published documentation-only patch that adds the npm-distributed agent skill and integration guide, with no runtime or contract changes.
+- The `v0.1.2` annotated tag and public GitHub Release point to the green published `main` commit recorded in `RELEASE.md`.
 - Supported release Node majors are 22, 24, and 26. Node 20 and the local EOL Node 23 runtime are not release evidence.
 - JavaScript, Python, and CFML are proposed future adapters, not current capabilities.
 - No task is considered complete from documentation alone; each completed task below has executable evidence.
@@ -180,4 +181,4 @@ git status --short
 
 ## Release completion
 
-No actionable repository implementation or v0.1.1 publication task remains blocked. The published registry version, fresh install, annotated tag, and GitHub Release are complete. The 0.1.2 agent integration documentation-only patch is prepared but not published; do not retry an uncertain npm publish without querying the registry. Future language adapters and ecosystem integration remain proposed in `ROADMAP.md`.
+No actionable repository implementation or 0.1.2 publication task remains blocked. The published registry versions, fresh installs, annotated tags, and GitHub Releases are complete. If a future publish command has an uncertain result, query the registry before retrying. Future language adapters and ecosystem integration remain proposed in `ROADMAP.md`.

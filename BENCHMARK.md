@@ -9,7 +9,7 @@
 This report records reproducible local measurements from generated TypeScript fixtures. It is evidence, not a latency or memory guarantee, and v0.1.0 provides no public performance SLO. The release gate rejects TIMEOUT for every fixture and checks stable fixture file, byte, result, truncation, and status structure. Each warm run is a second in-memory operation in the same process; V1 has no persistent disk cache.
 
 - Published package version: 0.1.1
-- Prepared patch version: 0.1.2 (agent integration documentation-only; benchmark baseline unchanged)
+- Published patch version: 0.1.2 (agent integration documentation-only; benchmark baseline unchanged)
 - Node.js: v23.10.0 (local baseline only; not release evidence)
 - Supported release runtimes: Node.js 22, 24, and 26; hosted benchmark gate: Ubuntu / Node 24
 - Resolver: TypeScript compiler API
