@@ -1,9 +1,10 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { lstatSync, readdirSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 import ignore from "ignore";
 import { minimatch } from "minimatch";
 import type { Diagnostic, DiscoveryPatterns, ResourceLimits, Truncation } from "../types";
 import { isSecretLike, repositoryRelative, type RootInfo } from "./paths";
+import { readBoundedText } from "./bounded-reader";
 
 export interface DiscoveredFile {
   absolutePath: string;
@@ -108,27 +109,52 @@ function hasAllowedExtension(relativePath: string, extensions: readonly string[]
   return extensions.some((extension) => lower.endsWith(extension.toLowerCase()));
 }
 
-function loadGitignore(root: RootInfo, diagnostics: Diagnostic[]): ReturnType<typeof ignore> {
+interface IgnoreScope {
+  base: string;
+  matcher: ReturnType<typeof ignore>;
+}
+
+function loadGitignore(root: RootInfo, directory: string, options: DiscoveryOptions, diagnostics: Diagnostic[], truncation: Truncation, budget: { files: number; bytes: number }): IgnoreScope {
   const matcher = ignore();
+  const path = join(directory, ".gitignore");
   try {
-    const path = join(root.absolute, ".gitignore");
-    const content = readFileSync(path, "utf8");
-    matcher.add(content.split(/\r?\n/));
+    if (lstatSync(path).isFile()) {
+      if (budget.files >= options.limits.maxFiles) {
+        diagnostics.push(diagnostic("MAX_FILES_REACHED", "The ignore-rule file budget was reached", "warning", repositoryRelative(root.absolute, path)));
+        uniquePushReason(truncation, "MAX_FILES_REACHED");
+        return { base: repositoryRelative(root.absolute, directory), matcher };
+      }
+      budget.files += 1;
+      const content = readBoundedText(path, Math.min(options.limits.maxSingleFileBytes, options.limits.maxParsedBytes - budget.bytes));
+      budget.bytes += content.bytes;
+      if ("text" in content) {
+        matcher.add(content.text.split(/\r?\n/));
+      } else {
+        diagnostics.push(diagnostic(content.reason === "size" ? "MAX_BYTES_REACHED" : "PARSE_ERROR", "Unable to read bounded .gitignore rules", "warning", repositoryRelative(root.absolute, path)));
+        if (content.reason === "size") uniquePushReason(truncation, "MAX_BYTES_REACHED");
+      }
+    }
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
     if (code !== "ENOENT") {
-      diagnostics.push(diagnostic("PARSE_ERROR", `Unable to read .gitignore: ${error instanceof Error ? error.message : String(error)}`, "warning", ".gitignore"));
+      diagnostics.push(diagnostic("PARSE_ERROR", `Unable to read .gitignore: ${error instanceof Error ? error.message : String(error)}`, "warning", repositoryRelative(root.absolute, path)));
     }
   }
-  return matcher;
+  return { base: repositoryRelative(root.absolute, directory), matcher };
 }
 
-function isGitignored(matcher: ReturnType<typeof ignore>, relativePath: string, directory: boolean): boolean {
-  const value = directory ? `${relativePath}/` : relativePath;
-  return matcher.ignores(value);
+function isGitignored(scopes: readonly IgnoreScope[], relativePath: string, directory: boolean): boolean {
+  let ignored = false;
+  for (const { base, matcher } of scopes) {
+    const local = base ? relativePath.slice(base.length + 1) : relativePath;
+    const result = matcher.test(directory ? `${local}/` : local);
+    if (result.ignored) ignored = true;
+    if (result.unignored) ignored = false;
+  }
+  return ignored;
 }
 
-function shouldSkipDirectory(relativePath: string, name: string, options: DiscoveryOptions, matcher: ReturnType<typeof ignore>): boolean {
+function shouldSkipDirectory(relativePath: string, name: string, options: DiscoveryOptions, matcher: readonly IgnoreScope[]): boolean {
   if (name === ".git" || name === "node_modules") {
     return true;
   }
@@ -141,7 +167,7 @@ function shouldSkipDirectory(relativePath: string, name: string, options: Discov
   return DEFAULT_IGNORED_DIRECTORIES.has(name) || isGitignored(matcher, relativePath, true);
 }
 
-function shouldSkipFile(relativePath: string, options: DiscoveryOptions, matcher: ReturnType<typeof ignore>): boolean {
+function shouldSkipFile(relativePath: string, options: DiscoveryOptions, matcher: readonly IgnoreScope[]): boolean {
   if (isSecretLike(relativePath)) {
     return true;
   }
@@ -165,11 +191,11 @@ export function discoverFiles(root: RootInfo, options: DiscoveryOptions): Discov
   const diagnostics: Diagnostic[] = [];
   const truncation: Truncation = { truncated: false, reasons: [] };
   const files: DiscoveredFile[] = [];
-  const matcher = loadGitignore(root, diagnostics);
   let bytesParsed = 0;
   let timedOut = false;
+  const ignoreBudget = { files: 0, bytes: 0 };
 
-  const visit = (directory: string): void => {
+  const visit = (directory: string, inherited: readonly IgnoreScope[]): void => {
     if (timedOut || truncation.reasons.includes("MAX_FILES_REACHED") || truncation.reasons.includes("MAX_BYTES_REACHED")) {
       return;
     }
@@ -179,6 +205,7 @@ export function discoverFiles(root: RootInfo, options: DiscoveryOptions): Discov
       return;
     }
 
+    const matcher = [...inherited, loadGitignore(root, directory, options, diagnostics, truncation, ignoreBudget)];
     let entries;
     try {
       entries = readdirSync(directory, { withFileTypes: true }).sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
@@ -207,7 +234,7 @@ export function discoverFiles(root: RootInfo, options: DiscoveryOptions): Discov
       }
       if (entry.isDirectory()) {
         if (!shouldSkipDirectory(relativePath, entry.name, options, matcher)) {
-          visit(absolutePath);
+          visit(absolutePath, matcher);
         }
         continue;
       }
@@ -242,7 +269,7 @@ export function discoverFiles(root: RootInfo, options: DiscoveryOptions): Discov
     }
   };
 
-  visit(root.absolute);
+  visit(root.absolute, []);
   files.sort((left, right) => left.relativePath < right.relativePath ? -1 : left.relativePath > right.relativePath ? 1 : 0);
   return {
     files,

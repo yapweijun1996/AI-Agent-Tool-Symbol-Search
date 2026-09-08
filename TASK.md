@@ -142,6 +142,16 @@ The design, contract, epic, roadmap, task plan, README, documentation standard, 
 
 **Acceptance evidence:** Workflow commands are reproducible locally through `npm run release:check`; hosted PR/main execution is required before publication.
 
+### REVIEW-001 — Close the six code-review findings
+
+**Status:** Complete locally; hosted CI is a per-revision merge gate.
+
+**Deliverable:** Guard compiler/configuration reads and dependency budgets; normalize instance-method symbols; scope constructor keyword resolution; honor nested ignore rules; support native TypeScript module/declaration extensions; reject conflicting helper operations through narrow types and runtime validation.
+
+**Acceptance evidence:** `test/review-regressions.test.ts` covers all six findings and additional configuration/read-failure cases. The original seven regression groups failed before the fixes. On Node 24.20.0, `npm ci` and `npm run release:check` pass with 43/43 tests and coverage of 92.91% lines, 84.85% branches, and 91.93% functions. Installed-package smoke checks CommonJS, ESM, `.mts`, method references, and helper rejection; benchmark fixtures have no `TIMEOUT`. Hosted CI must pass for this follow-up revision before merge; earlier CI only validates the prior release-candidate commit.
+
+**CI follow-up:** PR #2 exposed Windows 8.3 short-path aliases in the installed TypeScript location. The compiler host now supplies canonical standard-library paths instead of widening the read policy. A library-location alias regression fails before the fix and passes after it; user-source symlink exclusions remain covered. Temporary fixture tracing was removed after confirming the cause.
+
 ## Verification status
 
 The full V1 and release verification commands are:

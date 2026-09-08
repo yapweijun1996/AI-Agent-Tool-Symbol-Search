@@ -78,6 +78,8 @@ For TypeScript operations, `project` must name an existing repository-relative r
 
 A selected config's `include`/`files` set controls the Program, but only discovered in-root TypeScript files are admitted. `baseUrl`, `paths`, and module resolution are honored. Project references are reported but not recursively built in V1. JavaScript files are excluded even if a config enables them. Compiler version and selected project (`tsconfig*.json` or `fallback`) are included in `stats`.
 
+Supported TypeScript extensions are `.ts`, `.tsx`, `.mts`, and `.cts`, including `.d.ts`, `.d.mts`, and `.d.cts`. Operation-specific library helpers accept only their corresponding optional `operation` literal and reject conflicting values with `INVALID_REQUEST` before accessing the root; use `execute` for a dynamically selected operation.
+
 ## 4. Normalized symbol kinds
 
 Adapters use only this public taxonomy:
@@ -104,6 +106,8 @@ confirmed, strong, candidate, unknown
 ```
 
 Compiler/checker evidence may be `confirmed`. AST/import evidence without complete semantic resolution is at most `strong`; lexical or heuristic evidence is `candidate`; unsupported or insufficient evidence is `unknown`. The V1 TypeScript adapter emits confirmed compiler/checker evidence and does not label structural guesses as confirmed.
+
+Definition/reference lookup normalizes aliases and single-root instantiated member symbols. Compiler-resolved literal element accesses such as `store["save"]()` are references; unrelated string values are not. A position on the `constructor` keyword targets that constructor, while positions in its parameters or body target the actual symbol at the requested location.
 
 Implementation results are limited to explicit `implements` and `extends` on class declarations or variable-bound class expressions, plus supported abstract-method overrides. Abstract overrides require a concrete derived class and a concrete, type-compatible member; abstract redeclarations, overload-only declarations, incompatible members, ambient classes or members nested under ambient namespace/module declarations, and `.d.ts` members are excluded. Structural assignability, dynamic dispatch, mixins, and runtime monkey-patching are not confirmed implementations. When an implementation query has no explicit relationship but semantic coverage is insufficient to make a stronger claim, the result is partial with `SEMANTIC_RESOLUTION_UNAVAILABLE`.
 
@@ -253,6 +257,8 @@ Default discovery:
 
 Precedence is deterministic: root/canonical containment, symlink/secret boundaries, and `node_modules` exclusion cannot be overridden; `--exclude` wins over ordinary matching; `--include` is an allow-list that can override `.gitignore` and ordinary generated-directory filters. Explicit file requests still undergo root, symlink, secret, extension, and project-file checks. A configured project file outside the root is excluded, its diagnostic points to the in-root project configuration without exposing the outside path, and the result is `partial`.
 
+Nested `.gitignore` files are evaluated relative to their own directories, including negation. Symlinked ignore-rule files are not read. Compiler content reads enforce discovery admission for repository sources, including transitive imports. Configuration inheritance must remain in-root or within permitted package directories. External type resolution admits regular TypeScript files and needed JSON metadata in root/ancestor `node_modules`, plus the installed TypeScript standard libraries and package metadata; it never admits arbitrary outside-root source paths or symlinked workspace packages. Denied imports/configuration reads yield sanitized warnings and partial evidence. Package dependencies remain excluded from result matches.
+
 ## 13. Resource limits
 
 Initial defaults are:
@@ -267,6 +273,8 @@ cooperative timeout budget: 5 seconds
 ```
 
 These are engineering budgets, not benchmark guarantees. Hitting a file, byte, result, or timeout budget sets `truncation.truncated: true`, includes the corresponding reason (`MAX_FILES_REACHED`, `MAX_BYTES_REACHED`, `MAX_RESULTS_REACHED`, or `TIMEOUT`), and normally returns `partial`. A not-found result after complete scanning is `complete`. Timeout checks are cooperative in discovery, indexing, and reference traversal; no hard process-isolation guarantee is claimed.
+
+The compiler reader independently applies the file, single-file byte, and total-byte budgets to configuration, sources, package metadata, and type dependencies. Read attempts and actual bytes are reported as `stats.compilerFilesRead` and `stats.compilerBytesRead`; repeated reads of cached content are not charged twice. `filesScanned` and `bytesParsed` retain the discovered-source measurements for compatibility. Ignore-rule content has a separate aggregate discovery budget using the same limits. Content reads are bounded before allocation and compiler reads also check the shared cooperative deadline.
 
 ## 14. Failure codes
 

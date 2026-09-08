@@ -136,6 +136,8 @@ export interface Truncation {
 export interface Stats {
   filesScanned?: number;
   bytesParsed?: number;
+  compilerFilesRead?: number;
+  compilerBytesRead?: number;
   matches?: number;
   compilerVersion?: string;
   project?: string;

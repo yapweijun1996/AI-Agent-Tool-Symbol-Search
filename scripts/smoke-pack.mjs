@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -22,7 +22,7 @@ try {
   const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--project", "tsconfig.json", "--symbol", "resolveConfig"], { encoding: "utf8", shell: useShell });
   if (cliRun.status !== 0) throw new Error(`packaged CLI exited ${cliRun.status}: ${cliRun.stderr}`);
   const cliResult = JSON.parse(cliRun.stdout);
-  if (cliResult.status !== "complete" || !cliResult.data.matches?.length) throw new Error("packaged CLI did not resolve the fixture definition");
+  if (cliResult.status !== "complete" || !cliResult.data.matches?.length) throw new Error(`packaged CLI did not resolve the fixture definition: ${JSON.stringify(cliResult)}`);
 
   const libraryRun = spawnSync(process.execPath, ["-e", [
     "const api = require('agent-symbol-search');",
@@ -30,7 +30,23 @@ try {
     "if (result.status !== 'complete' || !result.data.matches.length) process.exit(1);"
   ].join("\n")], { cwd: installRoot, encoding: "utf8" });
   if (libraryRun.status !== 0) throw new Error(`packaged library failed: ${libraryRun.stderr}`);
-  console.log("smoke: packaged CLI and library API passed outside the source checkout");
+  const moduleRoot = join(temporary, "module-fixture");
+  mkdirSync(moduleRoot);
+  writeFileSync(join(moduleRoot, "main.mts"), 'export class Store { save() {} }\nconst store = new Store();\nstore.save();\nstore["save"]();\n');
+  const moduleCli = spawnSync(cli, ["references", "--root", moduleRoot, "--symbol", "Store.save"], { cwd: installRoot, encoding: "utf8", shell: useShell });
+  if (moduleCli.status !== 0) throw new Error(`packaged module CLI failed: ${moduleCli.stderr}`);
+  const moduleResult = JSON.parse(moduleCli.stdout);
+  if (moduleResult.status !== "complete" || moduleResult.data.matches.length !== 2) throw new Error(`packaged CLI missed instance method references in .mts: ${JSON.stringify(moduleResult)}`);
+  const esmRun = spawnSync(process.execPath, ["--input-type=module", "-e", [
+    "import { findDefinition } from 'agent-symbol-search';",
+    `const root = ${JSON.stringify(moduleRoot)};`,
+    "const result = findDefinition({ root, symbol: 'save', from: { path: 'main.mts', line: 3, column: 7 } });",
+    "if (result.status !== 'complete' || result.data.matches[0]?.qualifiedName !== 'Store.save') process.exit(1);",
+    "const invalid = findDefinition({ root, symbol: 'save', operation: 'references' });",
+    "if (invalid.status !== 'error' || invalid.diagnostics[0]?.code !== 'INVALID_REQUEST') process.exit(1);"
+  ].join("\n")], { cwd: installRoot, encoding: "utf8" });
+  if (esmRun.status !== 0) throw new Error(`packaged ESM library failed: ${esmRun.stderr}`);
+  console.log("smoke: packaged CLI, CommonJS, ESM, and review regressions passed outside the source checkout");
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

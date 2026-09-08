@@ -19,6 +19,10 @@ All entries are user-visible changes. Package `0.1.0` is a release candidate pen
 - Added bounded read-only discovery with root/symlink containment, `.gitignore`, nested include-glob reachability, non-overridable `node_modules` exclusion, include/exclude precedence, secret exclusions, file/byte/result budgets, adversarial glob timeout coverage, and cooperative timeout diagnostics.
 - Added optional `search.project` selection with deterministic multiple-config recovery, repository-boundary validation, regular-file tsconfig enforcement, and project-scoped search file sets.
 - Added injectable CLI stdout/stderr streams for in-process JSON, diagnostics, and exit-code coverage.
+- Fixed transitive compiler imports bypassing discovery boundaries and resource budgets; configuration, package metadata, and type dependencies now use a guarded reader with separate compiler read metrics.
+- Fixed Windows short-path installations incorrectly excluding TypeScript standard libraries by using the canonical library location in the compiler host.
+- Fixed instance-method symbol normalization, literal element-access references, and definition/reference positions inside constructor bodies and parameter types.
+- Fixed nested `.gitignore` matching/negation, added `.mts`/`.cts` and declaration-file support, and rejected conflicting operations in dedicated library helpers at compile time and runtime.
 
 ### Verification
 
@@ -26,6 +30,7 @@ All entries are user-visible changes. Package `0.1.0` is a release candidate pen
 - Added `BENCHMARK.md` with reproducible cold/warm small, medium, and large fixture measurements without a latency guarantee.
 - Added documentation, schema, capability, packaging, benchmark-evidence, and verification scripts; docs and benchmark checks compare claims with runtime output and fresh deterministic fixture measurements. Direct Ajv and minimatch dependencies are pinned to audited non-vulnerable releases.
 - Added serial native Node coverage for product sources with lines ≥85%, functions ≥80%, and branches ≥75%; ordinary tests use a 30-second `EngineOptions` budget while the product default remains 5 seconds.
+- Added review regression tests for imported secret/excluded/symlink/outside-root files, dependency budgets, configuration inheritance, bounded readers, nested ignore rules, instance methods, constructor positions, native module extensions, and helper operation conflicts; installed-artifact smoke now also exercises ESM and native-module method navigation.
 - Added least-privilege GitHub Actions coverage for Node 22/24/26 on Ubuntu, Node 24 package smoke on Ubuntu/macOS/Windows, and an Ubuntu/Node 24 benchmark gate. Updated package metadata, public npm configuration, `prepack`, `release:check`, `prepublishOnly`, and `RELEASE.md`.
 
 ### Documentation

@@ -1,6 +1,8 @@
 import { realpathSync } from "node:fs";
 import { dirname, resolve as resolvePath } from "node:path";
 import * as ts from "typescript";
+import { TYPESCRIPT_EXTENSIONS } from "./extensions";
+import { CompilerFiles } from "./compiler-files";
 import type { Diagnostic, DiscoveryPatterns, ResourceLimits, Stats, Truncation } from "../types";
 import { discoverFiles, type DiscoveredFile } from "./discovery";
 import { canonicalizeRoot, isInsideRoot, repositoryRelative, resolveExistingInsideRoot, type RootInfo } from "./paths";
@@ -45,11 +47,8 @@ function mergeTruncation(target: Truncation, source: Truncation): void {
 }
 
 function formatTypeScriptDiagnostic(item: ts.Diagnostic): string {
+  if (item.code === 5083) return "Cannot read a referenced configuration within the permitted boundaries and budgets (TS5083)";
   return ts.flattenDiagnosticMessageText(item.messageText, " ");
-}
-
-function sourceExtensions(): readonly string[] {
-  return [".ts", ".tsx", ".d.ts"];
 }
 
 function canonicalFilePath(fileName: string): string {
@@ -182,7 +181,7 @@ export function buildProject(inputRoot: string, options: ProjectBuildOptions): P
   const sourceDiscovery = discoverFiles(root, {
     include: options.include,
     exclude: options.exclude,
-    extensions: sourceExtensions(),
+    extensions: TYPESCRIPT_EXTENSIONS,
     limits: options.limits,
     deadline: options.deadline
   });
@@ -196,12 +195,17 @@ export function buildProject(inputRoot: string, options: ProjectBuildOptions): P
 
   let rootNames = discoveredPaths;
   let compilerOptions = fallbackCompilerOptions();
+  const compilerFiles = new CompilerFiles(root, new Set(discoveredPaths), options.limits, diagnostics, truncation, selectedProject, options.deadline);
   if (explicitProjectPath) {
-    const configResult = ts.readConfigFile(explicitProjectPath, ts.sys.readFile);
+    const configResult = ts.readConfigFile(explicitProjectPath, path => compilerFiles.readFile(path, true));
     if (configResult.error) {
       diagnostics.push(diagnostic("PARSE_ERROR", `Unable to parse TypeScript project configuration: ${formatTypeScriptDiagnostic(configResult.error)}`, "warning", selectedProject));
     } else {
-      const parsed = ts.parseJsonConfigFileContent(configResult.config, ts.sys, dirname(explicitProjectPath), undefined, explicitProjectPath);
+      const parsed = ts.parseJsonConfigFileContent(configResult.config, {
+        ...ts.sys,
+        readFile: path => compilerFiles.readFile(path, true),
+        fileExists: path => compilerFiles.readFile(path, true) !== undefined
+      }, dirname(explicitProjectPath), undefined, explicitProjectPath);
       for (const error of parsed.errors) {
         diagnostics.push(diagnostic("PARSE_ERROR", formatTypeScriptDiagnostic(error), "warning", selectedProject));
       }
@@ -225,7 +229,7 @@ export function buildProject(inputRoot: string, options: ProjectBuildOptions): P
     }
   }
 
-  const host = ts.createCompilerHost(compilerOptions, true);
+  const host = compilerFiles.createHost(compilerOptions);
   const program = ts.createProgram(rootNames, compilerOptions, host);
   const checker = program.getTypeChecker();
   const knownByAbsolute = new Map(discoveredFiles.map((file) => [canonicalFilePath(file.absolutePath), file.relativePath]));
@@ -261,6 +265,8 @@ export function buildProject(inputRoot: string, options: ProjectBuildOptions): P
     ...baseStats,
     filesScanned: sourceDiscovery.filesScanned,
     bytesParsed: sourceDiscovery.bytesParsed,
+    compilerFilesRead: compilerFiles.filesRead,
+    compilerBytesRead: compilerFiles.bytesRead,
     ...(selectedProject ? { project: selectedProject } : { project: "fallback" })
   };
   return {
