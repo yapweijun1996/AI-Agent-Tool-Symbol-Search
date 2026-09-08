@@ -5,7 +5,7 @@
 | Status | Active |
 | Owner | Project maintainers |
 | Last reviewed | 2026-09-08 |
-| Package version | 0.1.0 (published on 2026-09-08) |
+| Package version | 0.1.1 (documentation patch release; no runtime changes) |
 
 > Deterministic, local-first, read-only symbol navigation for AI coding agents.
 
@@ -97,7 +97,7 @@ npm run benchmark:check
 npm run docs:check
 ```
 
-`coverage` rebuilds the test artifacts and runs serial Node native coverage over product sources only, enforcing lines ≥85%, functions ≥80%, and branches ≥75%. `smoke:pack` installs the npm tarball in a temporary directory outside the source checkout and exercises both the CLI and library API. `BENCHMARK.md` records cold and warm in-memory measurements for deterministic small, medium, and large generated fixtures; every release fixture must avoid `TIMEOUT`, but v0.1.0 makes no public latency SLO. `RELEASE.md` records the completed publication and recovery checklist.
+`coverage` rebuilds the test artifacts and runs serial Node native coverage over product sources only, enforcing lines ≥85%, functions ≥80%, and branches ≥75%. `smoke:pack` installs the npm tarball in a temporary directory outside the source checkout and exercises both the CLI and library API. `BENCHMARK.md` records cold and warm in-memory measurements for deterministic small, medium, and large generated fixtures; every release fixture must avoid `TIMEOUT`, but v0.1.0 makes no public latency SLO. `v0.1.1` is a documentation-only patch and does not alter runtime behavior. `RELEASE.md` records the completed publication and recovery checklist.
 
 ## Documentation
 
@@ -108,5 +108,5 @@ npm run docs:check
 - [`TASK.md`](./TASK.md) — evidence-backed task status
 - [`CHANGELOG.md`](./CHANGELOG.md) — published release and historical changes
 - [`BENCHMARK.md`](./BENCHMARK.md) — reproducible performance baseline and release gate
-- [`RELEASE.md`](./RELEASE.md) — v0.1.0 release, publication, and recovery checklist
+- [`RELEASE.md`](./RELEASE.md) — v0.1.0 release and v0.1.1 publication checklists
 - [`DOCUMENTATION_STANDARD.md`](./DOCUMENTATION_STANDARD.md) — documentation governance
