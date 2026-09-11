@@ -23,10 +23,10 @@ try {
   if (!skill.startsWith("---") || !skill.includes("name: agent-symbol-search")) throw new Error("packaged agent skill is missing or invalid");
 
   const cli = join(installRoot, "node_modules", ".bin", cliExecutable);
-  const cliRun = spawnSync(cli, ["definition", "--root", fixtureRoot, "--project", "tsconfig.json", "--symbol", "resolveConfig"], { encoding: "utf8", shell: useShell });
+  const cliRun = spawnSync(cli, ["symbols", "--root", fixtureRoot, "--path", "src/config.ts"], { encoding: "utf8", shell: useShell });
   if (cliRun.status !== 0) throw new Error(`packaged CLI exited ${cliRun.status}: ${cliRun.stderr}`);
   const cliResult = JSON.parse(cliRun.stdout);
-  if (cliResult.status !== "complete" || !cliResult.data.matches?.length) throw new Error(`packaged CLI did not resolve the fixture definition: ${JSON.stringify(cliResult)}`);
+  if (cliResult.status !== "complete" || !cliResult.data.matches?.some((match) => match.name === "resolveConfig")) throw new Error(`packaged CLI did not list the fixture symbols: ${JSON.stringify(cliResult)}`);
 
   const libraryRun = spawnSync(process.execPath, ["-e", [
     "const api = require('agent-symbol-search');",

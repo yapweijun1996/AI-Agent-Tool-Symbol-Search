@@ -55,6 +55,20 @@ Use `npx --no-install` after installation so a search never downloads an unpinne
 npx --no-install agent-symbol-search capabilities --root /path/to/repository
 ```
 
+For a global Codex CLI installation from any directory, use:
+
+```bash
+npm install --global agent-symbol-search@latest
+agent-symbol-search capabilities --root /path/to/repository
+```
+
+For a GitHub revision that has not been published to npm yet, npm builds the checkout through its `prepare` script:
+
+```bash
+npm install --global github:yapweijun1996/AI-Agent-Tool-Symbol-Search
+agent-symbol-search capabilities --root /path/to/repository
+```
+
 ```bash
 npm ci
 npm run build

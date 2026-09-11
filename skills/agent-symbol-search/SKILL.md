@@ -25,7 +25,7 @@ Use the installed binary without allowing `npx` to download an unpinned package:
 npx --no-install agent-symbol-search capabilities --root "$REPO_ROOT"
 ```
 
-The package supports Node.js 22, 24, and 26. Keep the repository root explicit and pass a repository-relative `tsconfig*.json` with `--project` whenever more than one TypeScript configuration exists.
+The package supports Node.js 22, 24, and 26. For a globally available Codex CLI command, install it from any directory with `npm install --global agent-symbol-search@latest`; use `npm install --global github:yapweijun1996/AI-Agent-Tool-Symbol-Search` when testing an unpublished GitHub revision. Keep the repository root explicit and pass a repository-relative `tsconfig*.json` with `--project` whenever more than one TypeScript configuration exists.
 
 ## Agent workflow
 

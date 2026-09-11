@@ -53,7 +53,7 @@ const agentSkillPath = resolve("skills/agent-symbol-search/SKILL.md");
 if (!existsSync(agentSkillPath)) {
   fail("skills/agent-symbol-search/SKILL.md: missing");
 } else {
-  const agentSkill = readFileSync(agentSkillPath, "utf8");
+  const agentSkill = readFileSync(agentSkillPath, "utf8").replace(/\r\n/g, "\n");
   const frontmatter = agentSkill.match(/^---\n([\s\S]*?)\n---\n/);
   if (!frontmatter || !/^name:\s*agent-symbol-search\s*$/m.test(frontmatter[1]) || !/^description:\s*.+$/m.test(frontmatter[1])) {
     fail("skills/agent-symbol-search/SKILL.md: missing required frontmatter");

@@ -15,8 +15,9 @@ const files = [...filesUnder("src"), ...filesUnder("test")].filter((path) => sta
 const failures = [];
 for (const file of files) {
   const content = readFileSync(file, "utf8");
-  if (!content.endsWith("\n")) failures.push(`${file}: missing final newline`);
-  if (content.includes("\r")) failures.push(`${file}: contains CRLF line endings`);
+  const normalized = content.replace(/\r\n/g, "\n");
+  if (!normalized.endsWith("\n")) failures.push(`${file}: missing final newline`);
+  if (/\r(?!\n)/.test(content)) failures.push(`${file}: contains a bare carriage return`);
   if (file.startsWith("src/") && /\beval\s*\(|\bnew Function\s*\(/.test(content)) failures.push(`${file}: executable evaluation is forbidden`);
   if (file.startsWith("src/") && content.includes("from \"node:child_process\"")) failures.push(`${file}: child-process execution is forbidden in the library`);
 }

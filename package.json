@@ -60,7 +60,8 @@
     "benchmark:check": "npm run build && node scripts/benchmark.mjs --check",
     "docs:check": "npm run build && node scripts/docs-check.mjs",
     "release:check": "npm run verify && npm run coverage && npm run smoke:pack && npm run capability:check && npm run benchmark:check && npm run docs:check",
-    "prepublishOnly": "npm run release:check"
+    "prepublishOnly": "npm run release:check",
+    "prepare": "npm run build"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
